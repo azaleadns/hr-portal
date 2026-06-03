@@ -1,0 +1,206 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@600;700&display=swap');
+
+/* Main Overlay */
+.ac-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    padding: 16px;
+}
+
+/* Modal Frame */
+.ac-modal {
+    width: 100%;
+    max-width: 540px;
+    background: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header styling */
+.ac-header {
+    background-color: #1A2536;
+    color: #ffffff;
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ac-header__title-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Gold Icon Badge */
+.ac-badge {
+    background-color: #D9A74A;
+    color: #1A2536;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Typography Rules */
+.ac-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.ac-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    color: #A0AEC0;
+    margin: 2px 0 0 0;
+}
+
+.ac-close-btn {
+    background: transparent;
+    border: none;
+    color: #A0AEC0;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.ac-close-btn:hover {
+    color: #ffffff;
+}
+
+/* Body Styling */
+.ac-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Grid Configuration */
+.ac-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* Form Fields */
+.ac-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Labels: Small, Bold, Uppercase, Serif */
+.ac-label {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4A5568;
+}
+
+.ac-required {
+    color: #E53E3E;
+    margin-left: 2px;
+}
+
+/* Inputs & Select */
+.ac-input,
+.ac-textarea {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    background-color: #F7FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 8px 12px;
+    color: #2D3748;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.ac-input::placeholder,
+.ac-textarea::placeholder {
+    color: #CBD5E0;
+}
+
+/* Special Dropdown Border style */
+.ac-input--gold-border {
+    border: 1.5px solid #D9A74A !important;
+}
+
+/* Limitadong laki ng textarea para hindi lumuwa sa modal */
+.ac-textarea {
+    resize: none;
+    height: 65px;
+}
+
+/* Error Handling */
+.ac-field--error .ac-input {
+    border-color: #E53E3E;
+}
+
+.ac-error-msg {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    color: #E53E3E;
+    margin-top: 1px;
+}
+
+/* Footer & Buttons */
+.ac-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.ac-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 8px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.ac-btn:hover {
+    opacity: 0.9;
+}
+
+.ac-btn:disabled {
+    opacity: 0.6;
+}
+
+.ac-btn--cancel {
+    background: transparent;
+    border: solid #1A2536 1px;
+    color: #2D3748;
+}
+
+.ac-btn--submit {
+    background-color: #1A2536;
+    border: none;
+    color: #ffffff;
+}

@@ -1,0 +1,157 @@
+/* ========================================
+   DASHBOARD — Elegant Layout Grids
+======================================== */
+
+.db-container {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Row 1: Two KPI cards */
+.db-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.db-kpi-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.db-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+}
+
+.db-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  bottom: 15%;
+  left: 0;
+  width: 5px;
+  background-color: var(--kpi-color);
+  border-radius: 0 4px 4px 0;
+}
+
+.db-kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.db-kpi-value {
+  font-size: 36px;
+  font-weight: 800;
+  color: #1a2849;
+  line-height: 1;
+}
+
+.db-kpi-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.db-kpi-sub {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.db-kpi-icon {
+  width: 56px;
+  height: 56px;
+  background: #f8fafc;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  flex-shrink: 0;
+  color: var(--kpi-color);
+  border: 1px solid #f1f5f9;
+}
+
+/* Row 2: Three Breakdown Charts */
+.db-charts-row2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.db-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+}
+
+.db-card-header {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.db-card-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a2849;
+}
+
+.db-chart-wrapper {
+  position: relative;
+  height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Row 3: Monthly line chart */
+.db-charts-row3 {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.db-line-chart-wrapper {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
+/* Utilities */
+.text-gold {
+  color: #c9a961;
+}
+
+@media (max-width: 1024px) {
+  .db-charts-row2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .db-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

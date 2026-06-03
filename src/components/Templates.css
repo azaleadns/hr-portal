@@ -1,0 +1,296 @@
+.templates-container {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  height: calc(100vh - 48px);
+  overflow: hidden;
+}
+
+.templates-sidebar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.templates-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2849;
+  border-bottom: 2px solid #c9a961;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.select-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.template-dropdown {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #0f172a;
+  outline: none;
+  background-color: #f8fafc;
+  cursor: pointer;
+}
+
+.template-dropdown:focus {
+  border-color: #1a2849;
+}
+
+.variables-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.var-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.var-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.var-input {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12.5px;
+  outline: none;
+  background-color: #f8fafc;
+}
+
+.var-input:focus {
+  border-color: #1a2849;
+  background-color: #ffffff;
+}
+
+.templates-workspace {
+  background: #f1f5f9;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.workspace-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+}
+
+.document-outer {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+/* Legal Parchment Sheet */
+.document-page {
+  position: relative;
+  background: #fcfbf7; /* Off-white warm parchment look */
+  width: 100%;
+  max-width: 760px;
+  min-height: 980px;
+  padding: 60px 80px;
+  border: 1px solid #d4cfb9;
+  box-shadow: 0 8px 24px rgba(27,31,35,0.08); /* Sophisticated dropshadow */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Red margin guide for legal drafting */
+.document-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 60px;
+  width: 1px;
+  background-color: rgba(239, 68, 68, 0.2);
+  pointer-events: none;
+}
+
+.letterhead {
+  text-align: center;
+  border-bottom: 2px double #1a2849;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.letterhead-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a2849;
+  letter-spacing: 1px;
+}
+
+.letterhead-sub {
+  font-size: 10px;
+  color: #c9a961;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+.letterhead-info {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.document-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  color: #1a2849;
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
+}
+
+.document-text-editor {
+  flex: 1;
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #1e293b;
+  outline: none;
+  resize: none;
+  white-space: pre-wrap;
+}
+
+.document-footer {
+  margin-top: auto;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.sign-area {
+  display: grid;
+  grid-template-columns: 100%;
+  margin-top: 40px;
+}
+
+.sign-flex {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.sign-col {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sign-line {
+  border-bottom: 1px solid #1a2849;
+  margin-top: 40px;
+}
+
+.sign-label {
+  font-size: 11px;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+.action-btn-styled {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.action-btn-primary {
+  background: #1a2849;
+  color: #ffffff;
+}
+
+.action-btn-primary:hover {
+  background: #c9a961;
+}
+
+.action-btn-secondary {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.action-btn-secondary:hover {
+  background: #f1f5f9;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+  .app-layout, .main-content, .templates-container, .templates-workspace, .document-outer {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    display: block !important;
+    background: transparent !important;
+  }
+  .templates-sidebar, .workspace-actions, .sidebar, .mobile-toggle {
+    display: none !important;
+  }
+  .document-page {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
