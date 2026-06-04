@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Job, Applicant } from '../types';
 import PostPositionModal from './PostPositionModal';
-import { Search, Briefcase, Users, Calendar, X, Archive, Landmark, RefreshCw } from 'lucide-react';
+import { Search, Briefcase, Users, Calendar, X, Archive, Landmark } from 'lucide-react';
 import './OpenJobs.css';
 
 interface OpenJobsProps {
@@ -10,19 +10,9 @@ interface OpenJobsProps {
   onCloseJob: (id: string, name: string) => void;
   onUpdateStatus: (id: string, status: Job['status']) => void;
   applicants: Applicant[];
-  isSyncing?: boolean;
-  onSync?: () => void;
 }
 
-export default function OpenJobs({ 
-  jobs = [], 
-  onAddJob, 
-  onCloseJob, 
-  onUpdateStatus, 
-  applicants,
-  isSyncing = false,
-  onSync
-}: OpenJobsProps) {
+export default function OpenJobs({ jobs = [], onAddJob, onCloseJob, onUpdateStatus, applicants }: OpenJobsProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -74,23 +64,10 @@ export default function OpenJobs({
           <h1 className="page-title">Job Openings</h1>
           <p className="page-subtitle">Track hiring capacity, adjust pipeline quotas, and announce open councils</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          {onSync && (
-            <button 
-              className="oj-btn-post" 
-              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#1e293b' }}
-              disabled={isSyncing}
-              onClick={onSync}
-            >
-              <RefreshCw size={14} className={isSyncing ? "animate-spin text-[#1e293b]" : ""} />
-              <span>{isSyncing ? "Syncing..." : "Sync Sheets"}</span>
-            </button>
-          )}
-          <button className="oj-btn-post" onClick={() => setShowModal(true)}>
-            <PlusCircleIcon />
-            <span>Post New Position</span>
-          </button>
-        </div>
+        <button className="oj-btn-post" onClick={() => setShowModal(true)}>
+          <PlusCircleIcon />
+          <span>Post New Position</span>
+        </button>
       </header>
 
       {/* Stats Section */}

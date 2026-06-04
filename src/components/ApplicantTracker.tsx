@@ -4,8 +4,34 @@ import { Applicant } from '../types';
 import { stageConfig } from '../data/mockData';
 import ApplicantDetailModal from './ApplicantDetailModal';
 import AddCandidateModal from './AddCandidateModal';
-import { Plus, Calendar, RefreshCw } from 'lucide-react';
+import { 
+  Plus, 
+  Calendar,
+  Search,
+  FileText,
+  Handshake,
+  GraduationCap,
+  ShieldCheck,
+  Mail,
+  FolderOpen,
+  CheckCircle2,
+  XCircle,
+  DoorOpen
+} from 'lucide-react';
 import './ApplicantTracker.css';
+
+const STAGE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = {
+  screening: Search,
+  review: FileText,
+  endorsement: Handshake,
+  final_review: GraduationCap,
+  bgcheck: ShieldCheck,
+  job_offer: Mail,
+  fo_requirements: FolderOpen,
+  hired: CheckCircle2,
+  rejected: XCircle,
+  TERMINATED: DoorOpen
+};
 
 const DroppableComponent = Droppable as any;
 const DraggableComponent = Draggable as any;
@@ -26,17 +52,9 @@ interface ApplicantTrackerProps {
   applicants: Applicant[];
   onUpdateStage: (id: string, stage: Applicant['stage']) => void;
   onAddCandidate: (applicant: Applicant) => void;
-  isSyncing?: boolean;
-  onSync?: () => void;
 }
 
-export default function ApplicantTracker({ 
-  applicants, 
-  onUpdateStage, 
-  onAddCandidate,
-  isSyncing = false,
-  onSync
-}: ApplicantTrackerProps) {
+export default function ApplicantTracker({ applicants, onUpdateStage, onAddCandidate }: ApplicantTrackerProps) {
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [showAddCandidate, setShowAddCandidate] = useState(false);
 
@@ -91,18 +109,7 @@ export default function ApplicantTracker({
           <h1 className="page-title">Applicant Tracker</h1>
           <p className="page-subtitle">Drag and drop cases to change position progression. Click card for credentials.</p>
         </div>
-        <div className="header-right" style={{ display: 'flex', gap: '10px' }}>
-          {onSync && (
-            <button 
-              className="add-candidate-btn" 
-              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#1e293b' }}
-              disabled={isSyncing}
-              onClick={onSync}
-            >
-              <RefreshCw size={14} className={isSyncing ? "animate-spin text-[#1e293b]" : ""} />
-              <span>{isSyncing ? "Syncing..." : "Sync Sheets"}</span>
-            </button>
-          )}
+        <div className="header-right">
           <button className="add-candidate-btn" onClick={() => setShowAddCandidate(true)}>
             <Plus size={16} />
             <span>Add Candidate</span>
@@ -116,13 +123,18 @@ export default function ApplicantTracker({
           {COLUMN_ORDER.map(stage => {
             const config = stageConfig[stage];
             const items = columns[stage] || [];
+            const IconComponent = STAGE_ICONS[stage];
 
             return (
               <div key={stage} className="kanban-column">
                 <div className="column-header" style={{ '--col-color': config.color } as React.CSSProperties}>
                   <div className="column-header-left">
-                    <span className="column-indicator" style={{ background: config.color }}></span>
-                    <h3 className="column-title">{config.label}</h3>
+                    {IconComponent ? (
+                      <IconComponent size={13} style={{ color: config.color }} />
+                    ) : (
+                      <span className="column-indicator" style={{ background: config.color }}></span>
+                    )}
+                    <h3 className="column-title" style={{ marginLeft: IconComponent ? '3px' : '0' }}>{config.label}</h3>
                   </div>
                   <span className="column-count" style={{
                     background: `${config.color}18`,
@@ -187,7 +199,9 @@ export default function ApplicantTracker({
 
                       {items.length === 0 && (
                         <div className="column-empty">
-                          <span className="empty-icon-small">{config.icon}</span>
+                          {IconComponent && (
+                            <IconComponent size={18} style={{ color: config.color, opacity: 0.6 }} />
+                          )}
                           <span>No applicants</span>
                         </div>
                       )}
