@@ -92,7 +92,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
     const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=0`;
 
     try {
-      const response = await fetch(csvUrl);
+      const response = await window.fetch(csvUrl);
       if (!response.ok) {
         throw new Error('Google Sheets responded with an invalid server status');
       }
@@ -423,7 +423,6 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         <div className="db-card">
           <div className="db-card-header">
             <h3 className="db-card-title">Gender Demographics</h3>
-            <span className="badge-pill">Staff Split</span>
           </div>
           <div className="db-chart-wrapper">
             {loading ? (
@@ -453,7 +452,6 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         <div className="db-card">
           <div className="db-card-header">
             <h3 className="db-card-title">Job Status Distribution</h3>
-            <span className="badge-pill">Tenure Class</span>
           </div>
           <div className="db-chart-wrapper">
             {loading ? (
@@ -484,7 +482,6 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         <div className="db-card">
           <div className="db-card-header">
             <h3 className="db-card-title">Attrition Reason Index</h3>
-            <span className="badge-pill font-medium">Inactive Records</span>
           </div>
           <div className="db-chart-wrapper">
             {loading ? (

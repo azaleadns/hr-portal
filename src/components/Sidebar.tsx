@@ -32,7 +32,6 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
               {!collapsed && (
                 <div className="logo-text">
                   <h1 className="logo-name">HR Portal</h1>
-                  <span className="logo-subtitle">St. Lawrence Law Suite</span>
                   <div className="logo-underline"></div>
                 </div>
               )}
