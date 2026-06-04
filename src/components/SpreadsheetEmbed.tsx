@@ -3,11 +3,11 @@ import { ExternalLink, Database, RefreshCw, FileSpreadsheet } from 'lucide-react
 
 export default function SpreadsheetEmbed() {
   const spreadsheetId = '1MCXPxNuU67Bn_MNB0ye3fh3Mlx5HwMIJdh52V9rgSBk';
-  // Use the direct embed url structure or standard edit with minimal chroming
-  const embedUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit?rm=minimal&widget=true&headers=false`;
+  // Use standard edit URL without widget structure to allow direct interactive cell editing
+  const embedUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit?rm=minimal`;
   
   return (
-    <div className="page-layout" style={{ height: '90vh', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="page-layout" style={{ height: 'calc(100vh - 32px)', maxWidth: 'none', width: '100%', padding: '16px 24px 8px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {/* Dynamic Header */}
       <header className="page-header" style={{ flexShrink: 0 }}>
         <div>

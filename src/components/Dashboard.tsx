@@ -452,27 +452,6 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
           <p className="page-subtitle">Inspect dynamic firm statistics, hiring channels, and employee structures from Google Sheets</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          
-          {/* Sync status metadata badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '11px', color: '#64748b' }}>
-            {errorMsg ? (
-              <>
-                <span style={{ width: '8px', height: '8px', background: '#f59e0b', borderRadius: '50%' }}></span>
-                <span>Fallback Mode Active</span>
-              </>
-            ) : sheetEmployees.length > 0 ? (
-              <>
-                <span style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%' }}></span>
-                <span>Live Sheet: {sheetEmployees.length} rows</span>
-              </>
-            ) : (
-              <>
-                <Loader2 size={12} className="animate-spin" />
-                <span>Syncing live spreadsheet...</span>
-              </>
-            )}
-          </div>
-
           <a
             href="https://docs.google.com/spreadsheets/d/1MCXPxNuU67Bn_MNB0ye3fh3Mlx5HwMIJdh52V9rgSBk/edit?gid=0#gid=0"
             target="_blank"
