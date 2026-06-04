@@ -336,14 +336,15 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
 
   // Terminations Breakdown Dynamic Chart (Computed dynamically from spreadsheet "Reason" details on inactive rows)
   const terminationsData = useMemo(() => {
-    // Pre-initialize only the 6 user-specified categories
+    // Pre-initialize only the 6 user-specified categories + 'Personal Reason'
     const reasonsMap: Record<string, number> = {
       'Better Opp.': 0,
       'Relocation': 0,
       'Career Chg.': 0,
       'Salary Dissat.': 0,
       'Mgmt. Dissat.': 0,
-      'WLB Issues': 0
+      'WLB Issues': 0,
+      'Personal Reason': 0
     };
 
     filteredEmployees.forEach(e => {
@@ -356,9 +357,8 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         }
 
         const rawReason = (e.reason || '').toLowerCase().trim();
-        if (!rawReason) return;
 
-        // Map database expressions to the exact 6 defined categories with case-insensitive contains logic
+        // Map database expressions with case-insensitive contains logic
         if (rawReason.includes('better') || rawReason.includes('opportunity') || rawReason.includes('opporthunity') || rawReason.includes('opp')) {
           reasonsMap['Better Opp.']++;
         } else if (rawReason.includes('relocat')) {
@@ -371,6 +371,9 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
           reasonsMap['Mgmt. Dissat.']++;
         } else if (rawReason.includes('balance') || rawReason.includes('life') || rawReason.includes('wlb') || rawReason.includes('burnout') || rawReason.includes('stress') || rawReason.includes('hours') || rawReason.includes('work-life')) {
           reasonsMap['WLB Issues']++;
+        } else {
+          // If the reason is 'Resigned', 'AWOL', empty, or any other personal reason
+          reasonsMap['Personal Reason']++;
         }
       }
     });

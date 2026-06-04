@@ -4,7 +4,7 @@ import { Applicant } from '../types';
 import { stageConfig } from '../data/mockData';
 import ApplicantDetailModal from './ApplicantDetailModal';
 import AddCandidateModal from './AddCandidateModal';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, RefreshCw } from 'lucide-react';
 import './ApplicantTracker.css';
 
 const DroppableComponent = Droppable as any;
@@ -26,9 +26,17 @@ interface ApplicantTrackerProps {
   applicants: Applicant[];
   onUpdateStage: (id: string, stage: Applicant['stage']) => void;
   onAddCandidate: (applicant: Applicant) => void;
+  isSyncing?: boolean;
+  onSync?: () => void;
 }
 
-export default function ApplicantTracker({ applicants, onUpdateStage, onAddCandidate }: ApplicantTrackerProps) {
+export default function ApplicantTracker({ 
+  applicants, 
+  onUpdateStage, 
+  onAddCandidate,
+  isSyncing = false,
+  onSync
+}: ApplicantTrackerProps) {
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [showAddCandidate, setShowAddCandidate] = useState(false);
 
@@ -83,7 +91,18 @@ export default function ApplicantTracker({ applicants, onUpdateStage, onAddCandi
           <h1 className="page-title">Applicant Tracker</h1>
           <p className="page-subtitle">Drag and drop cases to change position progression. Click card for credentials.</p>
         </div>
-        <div className="header-right">
+        <div className="header-right" style={{ display: 'flex', gap: '10px' }}>
+          {onSync && (
+            <button 
+              className="add-candidate-btn" 
+              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#1e293b' }}
+              disabled={isSyncing}
+              onClick={onSync}
+            >
+              <RefreshCw size={14} className={isSyncing ? "animate-spin text-[#1e293b]" : ""} />
+              <span>{isSyncing ? "Syncing..." : "Sync Sheets"}</span>
+            </button>
+          )}
           <button className="add-candidate-btn" onClick={() => setShowAddCandidate(true)}>
             <Plus size={16} />
             <span>Add Candidate</span>
