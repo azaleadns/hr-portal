@@ -53,19 +53,38 @@ function parseCSVLine(text: string): string[] {
   return cols;
 }
 
-// Flexible helper to parse complex month year formats like "Aug 14, 2025" or "April 17, 2026"
+// Flexible helper to parse complex month year formats like "Aug 14, 2025", "2026-03-01", etc.
 function parseSheetDate(dateStr: string): { month: number; year: number } | null {
   if (!dateStr || typeof dateStr !== 'string') return null;
-  const match = dateStr.match(/([a-zA-Z]+)\s+(\d+)\s*,\s*(\d{4})/);
-  if (match) {
-    const monthName = match[1].toLowerCase();
-    const year = parseInt(match[3], 10);
+  
+  // Try format "Month DD, YYYY" (e.g., "Aug 14, 2025")
+  const matchReadable = dateStr.match(/([a-zA-Z]+)\s+(\d+)\s*,\s*(\d{4})/);
+  if (matchReadable) {
+    const monthName = matchReadable[1].toLowerCase();
+    const year = parseInt(matchReadable[3], 10);
     const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
     const month = months.findIndex(name => monthName.startsWith(name));
     if (month !== -1) {
       return { month, year };
     }
   }
+  
+  // Try ISO format "YYYY-MM-DD" (e.g., "2026-03-01")
+  const matchISO = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matchISO) {
+    const year = parseInt(matchISO[1], 10);
+    const month = parseInt(matchISO[2], 10) - 1; // 0-indexed month
+    if (month >= 0 && month <= 11) {
+      return { month, year };
+    }
+  }
+
+  // Fallback to JS standard Date parsing
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return { month: d.getMonth(), year: d.getFullYear() };
+  }
+  
   return null;
 }
 
@@ -76,8 +95,8 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
-  // Year selector filter for the Monthly Trend Line Graph
-  const [selectedYear, setSelectedYear] = useState<string>('2025');
+  // Year selector filter (starts with current year automatically)
+  const [selectedYear, setSelectedYear] = useState<string>(() => String(new Date().getFullYear()));
 
   // Trigger spreadsheet live sync on mount or manual click
   const syncSpreadsheetData = async (isManual = false) => {
@@ -166,10 +185,67 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
     return sheetEmployees.length > 0 ? sheetEmployees : employees;
   }, [sheetEmployees, employees]);
 
+  // Dynamically compile available years starting from 2022 up to future/next years automatically
+  const availableYears = useMemo(() => {
+    const yearsSet = new Set<number>();
+    const startYear = 2022;
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1; // Future year automatic adding
+    
+    // Add all years in sequence from 2022 up to nextYear
+    for (let y = startYear; y <= nextYear; y++) {
+      yearsSet.add(y);
+    }
+    
+    finalEmployees.forEach(e => {
+      const hireInfo = parseSheetDate(e.dateHired);
+      if (hireInfo && hireInfo.year >= startYear) {
+        yearsSet.add(hireInfo.year);
+      }
+      if (e.terminationDate) {
+        const termInfo = parseSheetDate(e.terminationDate);
+        if (termInfo && termInfo.year >= startYear) {
+          yearsSet.add(termInfo.year);
+        }
+      }
+    });
+
+    return Array.from(yearsSet).sort((a, b) => a - b);
+  }, [finalEmployees]);
+
+  // Filter final employees based on the global overview selectedYear
+  const filteredEmployees = useMemo(() => {
+    if (selectedYear === 'All') return finalEmployees;
+    const yearNum = parseInt(selectedYear, 10);
+    return finalEmployees.filter(e => {
+      const hireInfo = parseSheetDate(e.dateHired);
+      if (hireInfo && hireInfo.year > yearNum) {
+        return false;
+      }
+      if (e.active === 'No' && e.terminationDate) {
+        const termInfo = parseSheetDate(e.terminationDate);
+        if (termInfo && termInfo.year < yearNum) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [finalEmployees, selectedYear]);
+
   // Derived KPIs
   const totalEmployees = useMemo(() => {
-    return finalEmployees.filter(e => e.active === 'Yes').length;
-  }, [finalEmployees]);
+    return filteredEmployees.filter(e => {
+      if (selectedYear === 'All') return e.active === 'Yes';
+      if (e.active === 'Yes') return true;
+      if (e.terminationDate) {
+        const termInfo = parseSheetDate(e.terminationDate);
+        if (termInfo && termInfo.year > parseInt(selectedYear, 10)) {
+          return true;
+        }
+      }
+      return false;
+    }).length;
+  }, [filteredEmployees, selectedYear]);
 
   const totalRecruitment = useMemo(() => {
     return applicants.length;
@@ -179,33 +255,38 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
   const genderData = useMemo(() => {
     let maleCount = 0;
     let femaleCount = 0;
-    let fallbackCount = 0;
 
-    finalEmployees.forEach(e => {
-      if (e.active === 'Yes') {
+    filteredEmployees.forEach(e => {
+      let isActiveInYear = e.active === 'Yes';
+      if (e.active === 'No' && e.terminationDate && selectedYear !== 'All') {
+        const termInfo = parseSheetDate(e.terminationDate);
+        if (termInfo && termInfo.year > parseInt(selectedYear, 10)) {
+          isActiveInYear = true;
+        }
+      }
+
+      if (isActiveInYear) {
         const gender = (e.gender || '').toLowerCase().trim();
         if (gender.startsWith('m')) {
           maleCount++;
         } else if (gender.startsWith('f')) {
           femaleCount++;
-        } else {
-          fallbackCount++;
         }
       }
     });
 
     return {
-      labels: ['Male', 'Female', 'Unspecified'],
+      labels: ['Male', 'Female'],
       datasets: [
         {
-          data: [maleCount, femaleCount, fallbackCount],
-          backgroundColor: ['#1a2849', '#c9a961', '#94a3b8'],
+          data: [maleCount, femaleCount],
+          backgroundColor: ['#1a2849', '#c9a961'],
           borderWidth: 1,
           borderColor: '#ffffff',
         },
       ],
     };
-  }, [finalEmployees]);
+  }, [filteredEmployees, selectedYear]);
 
   // Job Status Breakdown Vertical Bar Chart
   const jobStatusData = useMemo(() => {
@@ -214,8 +295,16 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
     let project = 0;
     let intern = 0;
 
-    finalEmployees.forEach(e => {
-      if (e.active === 'Yes') {
+    filteredEmployees.forEach(e => {
+      let isActiveInYear = e.active === 'Yes';
+      if (e.active === 'No' && e.terminationDate && selectedYear !== 'All') {
+        const termInfo = parseSheetDate(e.terminationDate);
+        if (termInfo && termInfo.year > parseInt(selectedYear, 10)) {
+          isActiveInYear = true;
+        }
+      }
+
+      if (isActiveInYear) {
         const status = (e.jobStatus || '').toLowerCase().trim();
         if (status.includes('reg')) {
           regular++;
@@ -243,22 +332,51 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         },
       ],
     };
-  }, [finalEmployees]);
+  }, [filteredEmployees, selectedYear]);
 
   // Terminations Breakdown Dynamic Chart (Computed dynamically from spreadsheet "Reason" details on inactive rows)
   const terminationsData = useMemo(() => {
-    const reasonsDict: Record<string, number> = {};
+    // Pre-initialize only the 6 user-specified categories
+    const reasonsMap: Record<string, number> = {
+      'Better Opp.': 0,
+      'Relocation': 0,
+      'Career Chg.': 0,
+      'Salary Dissat.': 0,
+      'Mgmt. Dissat.': 0,
+      'WLB Issues': 0
+    };
 
-    finalEmployees.forEach(e => {
+    filteredEmployees.forEach(e => {
       if (e.active === 'No') {
-        const reason = e.reason || 'Not Specified';
-        reasonsDict[reason] = (reasonsDict[reason] || 0) + 1;
+        if (selectedYear !== 'All' && e.terminationDate) {
+          const termInfo = parseSheetDate(e.terminationDate);
+          if (!termInfo || termInfo.year !== parseInt(selectedYear, 10)) {
+            return;
+          }
+        }
+
+        const rawReason = (e.reason || '').toLowerCase().trim();
+        if (!rawReason) return;
+
+        // Map database expressions to the exact 6 defined categories with case-insensitive contains logic
+        if (rawReason.includes('better') || rawReason.includes('opportunity') || rawReason.includes('opporthunity') || rawReason.includes('opp')) {
+          reasonsMap['Better Opp.']++;
+        } else if (rawReason.includes('relocat')) {
+          reasonsMap['Relocation']++;
+        } else if (rawReason.includes('career') || rawReason.includes('change') || rawReason.includes('chg')) {
+          reasonsMap['Career Chg.']++;
+        } else if (rawReason.includes('salary') || rawReason.includes('pay') || rawReason.includes('compensation') || rawReason.includes('wage') || rawReason.includes('dissatisfaction with salary')) {
+          reasonsMap['Salary Dissat.']++;
+        } else if (rawReason.includes('management') || rawReason.includes('manager') || rawReason.includes('mgmt') || rawReason.includes('boss') || rawReason.includes('leadership') || rawReason.includes('dissatisfaction with management')) {
+          reasonsMap['Mgmt. Dissat.']++;
+        } else if (rawReason.includes('balance') || rawReason.includes('life') || rawReason.includes('wlb') || rawReason.includes('burnout') || rawReason.includes('stress') || rawReason.includes('hours') || rawReason.includes('work-life')) {
+          reasonsMap['WLB Issues']++;
+        }
       }
     });
 
-    // Seed visual defaults if we have zero inactive records
-    const labels = Object.keys(reasonsDict).length > 0 ? Object.keys(reasonsDict) : ['Resigned', 'AWOL', 'Terminated'];
-    const dataValues = Object.keys(reasonsDict).length > 0 ? Object.values(reasonsDict) : [8, 1, 1];
+    const labels = Object.keys(reasonsMap);
+    const dataValues = Object.values(reasonsMap);
 
     return {
       labels: labels,
@@ -272,7 +390,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         },
       ],
     };
-  }, [finalEmployees]);
+  }, [filteredEmployees, selectedYear]);
 
   // Hires vs. Total Leaves (Monthly Trend) Line Graph - dynamically parsed based on dateHired / terminationDate col entries
   const monthlyTrendData = useMemo(() => {
@@ -304,7 +422,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
       labels: months,
       datasets: [
         {
-          label: 'Firm Counsel Hires',
+          label: 'Hires',
           data: hiresTrend,
           borderColor: '#c9a961',
           backgroundColor: 'rgba(201, 169, 97, 0.1)',
@@ -313,7 +431,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
           fill: true,
         },
         {
-          label: 'Contract Departures / Leaves',
+          label: 'Leaves',
           data: leavesTrend,
           borderColor: '#1a2849',
           backgroundColor: 'rgba(26, 40, 73, 0.05)',
@@ -330,7 +448,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
       {/* Page Header */}
       <header className="page-header" style={{ flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="page-title">Executive Diagnostic Studio</h1>
+          <h1 className="page-title">Overview</h1>
           <p className="page-subtitle">Inspect dynamic firm statistics, hiring channels, and employee structures from Google Sheets</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -355,16 +473,6 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
             )}
           </div>
 
-          <button
-            onClick={() => syncSpreadsheetData(true)}
-            className="add-candidate-btn"
-            disabled={loading || syncing}
-            style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
-            <span>{syncing ? "Syncing..." : "Sync Database"}</span>
-          </button>
-
           <a
             href="https://docs.google.com/spreadsheets/d/1MCXPxNuU67Bn_MNB0ye3fh3Mlx5HwMIJdh52V9rgSBk/edit?gid=0#gid=0"
             target="_blank"
@@ -375,6 +483,31 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
             <ExternalLink size={14} />
             <span>Open Spreadsheet</span>
           </a>
+
+          {/* Calendar Year Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '4px' }}>
+            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Select Year:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              style={{
+                padding: '6px 12px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#1a2849',
+                background: '#ffffff',
+                border: '1.5px solid #cbd5e1',
+                borderRadius: '8px',
+                outline: 'none',
+                cursor: 'pointer',
+                borderColor: '#c9a961'
+              }}
+            >
+              {availableYears.map(year => (
+                <option key={year} value={String(year)}>{year} Year</option>
+              ))}
+            </select>
+          </div>
         </div>
       </header>
 
@@ -422,7 +555,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         {/* Chart 1: Gender Breakdown (Doughnut) */}
         <div className="db-card">
           <div className="db-card-header">
-            <h3 className="db-card-title">Gender Demographics</h3>
+            <h3 className="db-card-title">Gender Breakdown</h3>
           </div>
           <div className="db-chart-wrapper">
             {loading ? (
@@ -481,7 +614,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         {/* Chart 3: Terminations Breakdown (Horizontal Bar) */}
         <div className="db-card">
           <div className="db-card-header">
-            <h3 className="db-card-title">Attrition Reason Index</h3>
+            <h3 className="db-card-title">Termination Reasons</h3>
           </div>
           <div className="db-chart-wrapper">
             {loading ? (
@@ -512,39 +645,8 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
 
       {/* Row 3: Hires vs. Total Leaves (Monthly Trend) */}
       <div className="db-charts-row3 db-card">
-        <div className="db-card-header" style={{ paddingBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <h3 className="db-card-title">Hires vs. Departures (Historical Trend)</h3>
-            <span className="badge-pill">Annual Counsel Tracking</span>
-          </div>
-          
-          {/* Year selector layout dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Select Calendar Year:</span>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              style={{
-                padding: '6px 12px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#1a2849',
-                background: '#ffffff',
-                border: '1.5px solid #cbd5e1',
-                borderRadius: '8px',
-                outline: 'none',
-                cursor: 'pointer',
-                borderColor: '#c9a961'
-              }}
-            >
-              <option value="2022">2022 Calendar Year</option>
-              <option value="2023">2023 Calendar Year</option>
-              <option value="2024">2024 Calendar Year</option>
-              <option value="2025">2025 Calendar Year</option>
-              <option value="2026">2026 Calendar Year</option>
-              <option value="All">All Consolidated Years</option>
-            </select>
-          </div>
+        <div className="db-card-header" style={{ paddingBottom: '16px' }}>
+          <h3 className="db-card-title">Hires vs. Departures (Monthly Trend)</h3>
         </div>
         
         <div className="db-line-chart-wrapper">

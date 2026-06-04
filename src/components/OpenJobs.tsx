@@ -61,7 +61,7 @@ export default function OpenJobs({ jobs = [], onAddJob, onCloseJob, onUpdateStat
       {/* Header */}
       <header className="page-header">
         <div>
-          <h1 className="page-title">Active Job Openings</h1>
+          <h1 className="page-title">Job Openings</h1>
           <p className="page-subtitle">Track hiring capacity, adjust pipeline quotas, and announce open councils</p>
         </div>
         <button className="oj-btn-post" onClick={() => setShowModal(true)}>

@@ -11,7 +11,7 @@ export default function SpreadsheetEmbed() {
       {/* Dynamic Header */}
       <header className="page-header" style={{ flexShrink: 0 }}>
         <div>
-          <h1 className="page-title">Live Spreadsheet Integrator</h1>
+          <h1 className="page-title">Google Spreadsheet</h1>
           <p className="page-subtitle">Inspect and edit rows in real-time. Changes written here synchronize with the HR diagnostic suite.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>

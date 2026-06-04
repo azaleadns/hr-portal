@@ -8,19 +8,35 @@ interface SidebarProps {
   onToggle: () => void;
   onAddCandidateClick: () => void;
   onPostPositionClick: () => void;
+  onNavClick?: () => void;
 }
 
-export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPostPositionClick }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPostPositionClick, onNavClick }: SidebarProps) {
   const location = useLocation();
   const [showRecruitment, setShowRecruitment] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Active expansion: either permanently persistent (not collapsed) or actively hovered
+  const isExpanded = !collapsed || isHovered;
+
+  const handleNavClick = () => {
+    setIsHovered(false);
+    if (onNavClick) {
+      onNavClick();
+    }
+  };
 
   return (
     <>
-      <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      <aside 
+        className={`sidebar ${collapsed ? 'collapsed' : ''} ${isHovered ? 'hovered' : ''}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         <div className="sidebar-inner">
           {/* Logo */}
           <div className="sidebar-logo">
-            <Link to="/" className="logo-wrapper">
+            <Link to="/" className="logo-wrapper" onClick={handleNavClick}>
               <div className="logo-icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#c9a961" opacity="0.3"></path>
@@ -29,7 +45,7 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
                 </svg>
               </div>
 
-              {!collapsed && (
+              {isExpanded && (
                 <div className="logo-text">
                   <h1 className="logo-name">HR Portal</h1>
                   <div className="logo-underline"></div>
@@ -40,17 +56,18 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
 
           {/* Navigation */}
           <nav className="sidebar-nav">
-            <div className="nav-section-label">{!collapsed && 'CORE WORKSPACE'}</div>
+            <div className="nav-section-label">{isExpanded && 'CORE WORKSPACE'}</div>
 
             {/* Overview / Analytics */}
             <NavLink
               to="/dashboard"
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `nav-item ${isActive || location.pathname === '/' ? 'active' : ''}`
               }
             >
               <span className="nav-icon"><LayoutDashboard size={20} /></span>
-              {!collapsed && <span className="nav-label">Overview</span>}
+              {isExpanded && <span className="nav-label">Overview</span>}
             </NavLink>
 
             {/* Recruitment Expandable Header */}
@@ -60,7 +77,7 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
               style={{ cursor: 'pointer' }}
             >
               <span className="nav-icon"><Users size={20} /></span>
-              {!collapsed && (
+              {isExpanded && (
                 <>
                   <span className="nav-label" style={{ flex: 1 }}>Recruitment</span>
                   <span className="nav-arrow">
@@ -75,9 +92,10 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
               <div className={`dropdown-content ${collapsed ? 'collapsed-dropdown' : ''}`}>
                 <NavLink
                   to="/applicant-tracker"
+                  onClick={handleNavClick}
                   className={({ isActive }) => `nav-sub-item ${isActive ? 'active' : ''}`}
                 >
-                  {!collapsed ? (
+                  {isExpanded ? (
                     <span className="nav-label">• Applicant Tracker</span>
                   ) : (
                     <span className="nav-icon-sub"><Users size={16} title="Applicant Tracker" /></span>
@@ -86,9 +104,10 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
 
                 <NavLink
                   to="/spreadsheet"
+                  onClick={handleNavClick}
                   className={({ isActive }) => `nav-sub-item ${isActive ? 'active' : ''}`}
                 >
-                  {!collapsed ? (
+                  {isExpanded ? (
                     <span className="nav-label">• Google Spreadsheet</span>
                   ) : (
                     <span className="nav-icon-sub"><FileSpreadsheet size={16} title="Google Spreadsheet" /></span>
@@ -97,9 +116,10 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
 
                 <NavLink
                   to="/open-jobs"
+                  onClick={handleNavClick}
                   className={({ isActive }) => `nav-sub-item ${isActive ? 'active' : ''}`}
                 >
-                  {!collapsed ? (
+                  {isExpanded ? (
                     <span className="nav-label">• Open Positions</span>
                   ) : (
                     <span className="nav-icon-sub"><Briefcase size={16} title="Open Positions" /></span>
@@ -111,11 +131,12 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
             {/* Templates Section */}
             <NavLink
               to="/templates"
+              onClick={handleNavClick}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               style={{ marginTop: '4px' }}
             >
               <span className="nav-icon"><FileSignature size={20} /></span>
-              {!collapsed && <span className="nav-label">Templates</span>}
+              {isExpanded && <span className="nav-label">Templates</span>}
             </NavLink>
           </nav>
 
@@ -123,12 +144,12 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
           <div className="sidebar-bottom-actions">
             <button className="bottom-btn add-candidate" onClick={onAddCandidateClick}>
               <UserPlus size={16} />
-              {!collapsed && <span>Add Candidate</span>}
+              {isExpanded && <span>Add Candidate</span>}
             </button>
 
             <button className="bottom-btn create-job" onClick={onPostPositionClick}>
               <Briefcase size={16} />
-              {!collapsed && <span>Post Position</span>}
+              {isExpanded && <span>Post Position</span>}
             </button>
           </div>
         </div>

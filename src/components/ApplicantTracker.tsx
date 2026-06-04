@@ -80,7 +80,7 @@ export default function ApplicantTracker({ applicants, onUpdateStage, onAddCandi
       {/* Header */}
       <header className="page-header">
         <div className="header-left">
-          <h1 className="page-title">Talent Acquisition Kanban</h1>
+          <h1 className="page-title">Applicant Tracker</h1>
           <p className="page-subtitle">Drag and drop cases to change position progression. Click card for credentials.</p>
         </div>
         <div className="header-right">

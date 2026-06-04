@@ -209,6 +209,7 @@ export default function App() {
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           onAddCandidateClick={() => setShowAddCandidate(true)}
           onPostPositionClick={() => setShowPostPosition(true)}
+          onNavClick={() => setSidebarCollapsed(true)}
         />
         
         <main className="main-content">

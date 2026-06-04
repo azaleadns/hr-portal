@@ -10,10 +10,14 @@
 }
 
 .tracker-page {
-  height: 100vh;
+  height: 100% !important;
+  max-width: none !important;
+  width: 100% !important;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 16px 24px 8px 24px !important;
+  gap: 12px !important;
 }
 
 .tracker-page::-webkit-scrollbar {
@@ -43,25 +47,26 @@
   filter: brightness(1.05);
 }
 
-/* Kanban Board */
+/* Kanban Board - flexbox flow optimized to fit screen height and scroll horizontally */
 .kanban-board {
-  display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 8px;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 12px;
   margin-top: 1px;
   flex: 1;
   min-height: 0;
   align-items: stretch;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 8px;
-  scrollbar-width: auto;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 4px 4px 12px 4px;
+  scrollbar-width: thin;
 }
 
 .kanban-column {
   display: flex;
   flex-direction: column;
-  min-width: 170px;
+  flex: 0 0 240px !important;
+  min-width: 220px !important;
   height: 100%;
 }
 
@@ -287,15 +292,4 @@
   border-color: var(--primary-navy, #1e3a8a);
 }
 
-@media (max-width: 1300px) {
-  .kanban-board {
-    display: flex;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    align-items: stretch;
-  }
 
-  .kanban-column {
-    flex: 0 0 180px;
-  }
-}
