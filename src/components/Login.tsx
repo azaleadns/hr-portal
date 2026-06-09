@@ -69,7 +69,7 @@ export default function Login({ onLogin }: LoginProps) {
             <span className="brand-l gold-text">L</span>
             <span className="gold-text">AF</span>
           </h1>
-          <p className="text-[11px] font-serif uppercase tracking-[0.25em] text-[#d1d5db] font-medium leading-relaxed">
+          <p className="text-[13px] font-serif uppercase tracking-[0.25em] text-[#d1d5db] font-medium leading-relaxed">
             HR Portal
           </p>
         </div>

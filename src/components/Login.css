@@ -10,7 +10,7 @@
   position: relative;
   overflow: hidden;
   /* Deep Navy Blue Gradient Background */
-  background: radial-gradient(circle at center, #1b284c 0%, #111c36 50%, #0a1122 100%);
+  background: linear-gradient(315deg, #CCAA49 0%, #123765 70%, #9E9E9E 100%);
   padding: 1.5rem;
   z-index: 1;
 }
@@ -296,7 +296,7 @@
 /* STLAF Premium Typography Overlapping Styles */
 .login-brand-name {
   font-family: Georgia, Garamond, "Times New Roman", serif;
-  font-size: 52px;
+  font-size: 65px;
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1.1;
