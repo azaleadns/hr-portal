@@ -28,8 +28,30 @@ export default function App() {
     localStorage.removeItem('stlaf_authenticated');
   };
 
-  const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
-  const [jobs, setJobs] = useState<Job[]>(initialJobs);
+  const [applicants, setApplicants] = useState<Applicant[]>(() => {
+    const saved = localStorage.getItem('stlaf_applicants');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved applicants', e);
+      }
+    }
+    // Return empty array [] by default to clear/remove candidates from the Kanban board on load
+    return [];
+  });
+  const [jobs, setJobs] = useState<Job[]>(() => {
+    const saved = localStorage.getItem('stlaf_jobs');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved jobs', e);
+      }
+    }
+    // Return empty array [] by default to clear/remove job positions on load
+    return [];
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Synchronized Employees list state for KPIs on Overview page
@@ -97,6 +119,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('stlaf_employees', JSON.stringify(employees));
   }, [employees]);
+
+  useEffect(() => {
+    localStorage.setItem('stlaf_applicants', JSON.stringify(applicants));
+  }, [applicants]);
+
+  useEffect(() => {
+    localStorage.setItem('stlaf_jobs', JSON.stringify(jobs));
+  }, [jobs]);
 
   const updateApplicantStage = (applicantId: string, newStage: Applicant['stage']) => {
     const applicant = applicants.find(app => app.id === applicantId);
@@ -216,6 +246,23 @@ export default function App() {
     setActivities(prev => [newActivity, ...prev]);
   };
 
+  const deleteCandidate = (candidateId: string) => {
+    const candidate = applicants.find(app => app.id === candidateId);
+    setApplicants(prev => prev.filter(app => app.id !== candidateId));
+    
+    // Add activity logging
+    if (candidate) {
+      const newActivity: Activity = {
+        id: `act-${Date.now()}`,
+        applicantName: candidate.name,
+        action: `removed candidate from pipeline tracking`,
+        timestamp: new Date().toISOString(),
+        stage: 'rejected'
+      };
+      setActivities(prev => [newActivity, ...prev]);
+    }
+  };
+
   return (
     <Router>
       {!isAuthenticated ? (
@@ -261,6 +308,7 @@ export default function App() {
                       applicants={applicants}
                       onUpdateStage={updateApplicantStage}
                       onAddCandidate={addCandidate}
+                      onDeleteCandidate={deleteCandidate}
                     />
                   }
                 />

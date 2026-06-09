@@ -1,7 +1,7 @@
 import React from 'react';
 import { Applicant } from '../types';
 import { stageConfig } from '../data/mockData';
-import { Briefcase, Calendar, Mail, Phone, Clock, GraduationCap, X } from 'lucide-react';
+import { Briefcase, Calendar, Mail, Phone, Clock, GraduationCap, X, Trash2 } from 'lucide-react';
 import './ApplicantDetailModal.css';
 
 const COLUMN_ORDER: Array<Applicant['stage']> = [
@@ -20,9 +20,10 @@ interface ApplicantDetailModalProps {
   applicant: Applicant;
   onClose: () => void;
   onUpdateStage: (id: string, stage: Applicant['stage']) => void;
+  onDelete: (id: string) => void;
 }
 
-export default function ApplicantDetailModal({ applicant, onClose, onUpdateStage }: ApplicantDetailModalProps) {
+export default function ApplicantDetailModal({ applicant, onClose, onUpdateStage, onDelete }: ApplicantDetailModalProps) {
   const config = stageConfig[applicant.stage || 'screening'];
 
   const formatDate = (dateStr?: string) => {
@@ -138,6 +139,17 @@ export default function ApplicantDetailModal({ applicant, onClose, onUpdateStage
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Delete Candidate Action */}
+          <div className="detail-modal-delete-action">
+            <button 
+              className="delete-profile-btn"
+              onClick={() => onDelete(applicant.id)}
+            >
+              <Trash2 size={13} />
+              <span>Remove Candidate Permanent Profile</span>
+            </button>
           </div>
         </div>
       </div>

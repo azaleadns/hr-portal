@@ -16,7 +16,8 @@ import {
   FolderOpen,
   CheckCircle2,
   XCircle,
-  DoorOpen
+  DoorOpen,
+  Trash2
 } from 'lucide-react';
 import './ApplicantTracker.css';
 
@@ -52,9 +53,15 @@ interface ApplicantTrackerProps {
   applicants: Applicant[];
   onUpdateStage: (id: string, stage: Applicant['stage']) => void;
   onAddCandidate: (applicant: Applicant) => void;
+  onDeleteCandidate: (id: string) => void;
 }
 
-export default function ApplicantTracker({ applicants, onUpdateStage, onAddCandidate }: ApplicantTrackerProps) {
+export default function ApplicantTracker({ 
+  applicants, 
+  onUpdateStage, 
+  onAddCandidate,
+  onDeleteCandidate
+}: ApplicantTrackerProps) {
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [showAddCandidate, setShowAddCandidate] = useState(false);
 
@@ -109,7 +116,15 @@ export default function ApplicantTracker({ applicants, onUpdateStage, onAddCandi
           <h1 className="page-title">Applicant Tracker</h1>
           <p className="page-subtitle">Drag and drop cases to change position progression. Click card for credentials.</p>
         </div>
-        <div className="header-right">
+        <div className="header-right" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {applicants.length > 0 && (
+            <button className="reset-demo-btn clear-all-btn" onClick={() => {
+              applicants.forEach(app => onDeleteCandidate(app.id));
+            }} title="Clear all candidates from board">
+              <Trash2 size={14} />
+              <span>Clear Board</span>
+            </button>
+          )}
           <button className="add-candidate-btn" onClick={() => setShowAddCandidate(true)}>
             <Plus size={16} />
             <span>Add Candidate</span>
@@ -237,6 +252,10 @@ export default function ApplicantTracker({ applicants, onUpdateStage, onAddCandi
           applicant={selectedApplicant}
           onClose={() => setSelectedApplicant(null)}
           onUpdateStage={onUpdateStage}
+          onDelete={(id) => {
+            onDeleteCandidate(id);
+            setSelectedApplicant(null);
+          }}
         />
       )}
 

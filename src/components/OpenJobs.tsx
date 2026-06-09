@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Job, Applicant } from '../types';
 import PostPositionModal from './PostPositionModal';
-import { Search, Briefcase, Users, Calendar, X, Archive, Landmark } from 'lucide-react';
+import { Search, Briefcase, Users, Calendar, X, Archive, Landmark, Trash2 } from 'lucide-react';
 import './OpenJobs.css';
 
 interface OpenJobsProps {
@@ -64,10 +64,27 @@ export default function OpenJobs({ jobs = [], onAddJob, onCloseJob, onUpdateStat
           <h1 className="page-title">Job Openings</h1>
           <p className="page-subtitle">Track hiring capacity, adjust pipeline quotas, and announce open councils</p>
         </div>
-        <button className="oj-btn-post" onClick={() => setShowModal(true)}>
-          <PlusCircleIcon />
-          <span>Post New Position</span>
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {jobs.length > 0 && (
+            <button
+              className="oj-btn-clear"
+              onClick={() => {
+                const confirmClear = window.confirm("Are you sure you want to clear all job openings?");
+                if (confirmClear) {
+                  jobs.forEach(job => onCloseJob(job.id, job.title));
+                }
+              }}
+              title="Clear all job openings"
+            >
+              <Trash2 size={14} />
+              <span>Clear Board</span>
+            </button>
+          )}
+          <button className="oj-btn-post" onClick={() => setShowModal(true)}>
+            <PlusCircleIcon />
+            <span>Post New Position</span>
+          </button>
+        </div>
       </header>
 
       {/* Stats Section */}
