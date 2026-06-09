@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ChevronDown, ChevronRight, Users, UserPlus, Briefcase, FileSpreadsheet, FileSignature, Menu } from 'lucide-react';
+import { LayoutDashboard, ChevronDown, ChevronRight, Users, UserPlus, Briefcase, FileSpreadsheet, FileSignature, Menu, LogIn } from 'lucide-react';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -9,9 +9,10 @@ interface SidebarProps {
   onAddCandidateClick: () => void;
   onPostPositionClick: () => void;
   onNavClick?: () => void;
+  onLogout?: () => void;
 }
 
-export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPostPositionClick, onNavClick }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPostPositionClick, onNavClick, onLogout }: SidebarProps) {
   const location = useLocation();
   const [showRecruitment, setShowRecruitment] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -151,6 +152,24 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
               <Briefcase size={16} />
               {isExpanded && <span>Post Position</span>}
             </button>
+
+            {onLogout && (
+              <button 
+                id="sidebar-logout-btn"
+                className="bottom-btn logout-btn" 
+                onClick={onLogout}
+                style={{ 
+                  marginTop: '4px',
+                  background: 'rgba(239, 68, 68, 0.08)', 
+                  border: '1px solid rgba(239, 68, 68, 0.25)', 
+                  color: '#fdbaf8',
+                  backdropFilter: 'blur(4px)'
+                }}
+              >
+                <LogIn size={16} style={{ transform: 'rotate(180deg)', stroke: '#ef4444' }} />
+                {isExpanded && <span style={{ color: '#ef4444' }}>Sign Out</span>}
+              </button>
+            )}
           </div>
         </div>
       </aside>

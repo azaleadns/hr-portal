@@ -10,9 +10,24 @@ import AddCandidateModal from './components/AddCandidateModal';
 import PostPositionModal from './components/PostPositionModal';
 import { Job, Applicant, Employee, Activity } from './types';
 import { applicants as initialApplicants, jobs as initialJobs, employees as initialEmployees } from './data/mockData';
+import Login from './components/Login';
 import './App.css';
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('stlaf_authenticated') === 'true';
+  });
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem('stlaf_authenticated', 'true');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('stlaf_authenticated');
+  };
+
   const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
   const [jobs, setJobs] = useState<Job[]>(initialJobs);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -203,74 +218,81 @@ export default function App() {
 
   return (
     <Router>
-      <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-          onAddCandidateClick={() => setShowAddCandidate(true)}
-          onPostPositionClick={() => setShowPostPosition(true)}
-          onNavClick={() => setSidebarCollapsed(true)}
-        />
-        
-        <main className="main-content">
-          <Routes>
-            <Route
-              path="/"
-              element={<Dashboard applicants={applicants} employees={employees} />}
+      {!isAuthenticated ? (
+        <Login onLogin={handleLogin} />
+      ) : (
+        <>
+          <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+            <Sidebar
+              collapsed={sidebarCollapsed}
+              onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onAddCandidateClick={() => setShowAddCandidate(true)}
+              onPostPositionClick={() => setShowPostPosition(true)}
+              onNavClick={() => setSidebarCollapsed(true)}
+              onLogout={handleLogout}
             />
-            <Route
-              path="/dashboard"
-              element={<Dashboard applicants={applicants} employees={employees} />}
-            />
-            <Route
-              path="/open-jobs"
-              element={
-                <OpenJobs
-                  jobs={jobs}
-                  onAddJob={addJob}
-                  onCloseJob={closeJob}
-                  onUpdateStatus={updateJobStatus}
-                  applicants={applicants}
+            
+            <main className="main-content">
+              <Routes>
+                <Route
+                  path="/"
+                  element={<Dashboard applicants={applicants} employees={employees} />}
                 />
-              }
-            />
-            <Route
-              path="/applicant-tracker"
-              element={
-                <ApplicantTracker
-                  applicants={applicants}
-                  onUpdateStage={updateApplicantStage}
-                  onAddCandidate={addCandidate}
+                <Route
+                  path="/dashboard"
+                  element={<Dashboard applicants={applicants} employees={employees} />}
                 />
-              }
-            />
-            <Route
-              path="/spreadsheet"
-              element={<SpreadsheetEmbed />}
-            />
-            <Route
-              path="/templates"
-              element={<Templates />}
-            />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </main>
-      </div>
+                <Route
+                  path="/open-jobs"
+                  element={
+                    <OpenJobs
+                      jobs={jobs}
+                      onAddJob={addJob}
+                      onCloseJob={closeJob}
+                      onUpdateStatus={updateJobStatus}
+                      applicants={applicants}
+                    />
+                  }
+                />
+                <Route
+                  path="/applicant-tracker"
+                  element={
+                    <ApplicantTracker
+                      applicants={applicants}
+                      onUpdateStage={updateApplicantStage}
+                      onAddCandidate={addCandidate}
+                    />
+                  }
+                />
+                <Route
+                  path="/spreadsheet"
+                  element={<SpreadsheetEmbed />}
+                />
+                <Route
+                  path="/templates"
+                  element={<Templates />}
+                />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </main>
+          </div>
 
-      {/* Global Add Candidate Modal */}
-      {showAddCandidate && (
-        <AddCandidateModal
-          onClose={() => setShowAddCandidate(false)}
-          onAdd={addCandidate}
-        />
-      )}
+          {/* Global Add Candidate Modal */}
+          {showAddCandidate && (
+            <AddCandidateModal
+              onClose={() => setShowAddCandidate(false)}
+              onAdd={addCandidate}
+            />
+          )}
 
-      {/* Global Post Position Modal */}
-      {showPostPosition && (
-        <PostPositionModal
-          onClose={() => setShowPostPosition(false)}
-          onSubmit={addJob}
-        />
+          {/* Global Post Position Modal */}
+          {showPostPosition && (
+            <PostPositionModal
+              onClose={() => setShowPostPosition(false)}
+              onSubmit={addJob}
+            />
+          )}
+        </>
       )}
     </Router>
   );
