@@ -10,7 +10,7 @@
   position: relative;
   overflow: hidden;
   /* Deep Navy Blue Gradient Background */
-  background: linear-gradient(315deg, #CCAA49 0%, #123765 70%, #9E9E9E 100%);
+  background: linear-gradient(315deg, #e4c778 0%, #123765 70%, #9E9E9E 100%);
   padding: 1.5rem;
   z-index: 1;
 }
@@ -148,6 +148,7 @@
 .glass-input-wrapper {
   position: relative;
   margin-bottom: 1.5rem;
+  margin-top: 10px;
 }
 
 .glass-input-icon {
