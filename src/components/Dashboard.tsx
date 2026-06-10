@@ -168,7 +168,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
       setSheetEmployees(loadedEmployees);
       setLastSyncTime(new Date());
     } catch (err: any) {
-      console.error('Spreadsheet sync error:', err);
+      console.warn('Spreadsheet sync error (normal if spreadsheet is not shared or local fallback is active):', err);
       setErrorMsg(err.message || 'Connecting to Google Sheets failed. Graceful online fallback active.');
     } finally {
       setLoading(false);

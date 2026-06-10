@@ -70,8 +70,8 @@ export async function fetchSpreadsheetCandidates(config: SyncConfig): Promise<Ap
         return data.candidates.map((c: any) => parseApplicantFromSheet(c));
       }
     } catch (e) {
-      console.error('Failed to fetch candidates from Apps Script:', e);
-      throw e;
+      console.warn('Failed to fetch candidates from Apps Script (likely unconfigured or private url):', e);
+      return null;
     }
   } else if (method === 'google_oauth' && accessToken) {
     try {
@@ -95,8 +95,8 @@ export async function fetchSpreadsheetCandidates(config: SyncConfig): Promise<Ap
       }
       return [];
     } catch (e) {
-      console.error('Failed to fetch candidates from Google OAuth Sheets API:', e);
-      throw e;
+      console.warn('Failed to fetch candidates from Google OAuth Sheets API:', e);
+      return null;
     }
   }
   return null;
@@ -115,8 +115,8 @@ export async function fetchSpreadsheetJobs(config: SyncConfig): Promise<Job[] | 
         return data.jobs.map((j: any) => parseJobFromSheet(j));
       }
     } catch (e) {
-      console.error('Failed to fetch jobs from Apps Script:', e);
-      throw e;
+      console.warn('Failed to fetch jobs from Apps Script:', e);
+      return null;
     }
   } else if (method === 'google_oauth' && accessToken) {
     try {
@@ -139,8 +139,8 @@ export async function fetchSpreadsheetJobs(config: SyncConfig): Promise<Job[] | 
       }
       return [];
     } catch (e) {
-      console.error('Failed to fetch jobs from Google OAuth Sheets API:', e);
-      throw e;
+      console.warn('Failed to fetch jobs from Google OAuth Sheets API:', e);
+      return null;
     }
   }
   return null;
@@ -150,12 +150,24 @@ export async function fetchSpreadsheetJobs(config: SyncConfig): Promise<Job[] | 
 export async function writeSpreadsheetCandidate(config: SyncConfig, candidate: Applicant): Promise<boolean> {
   const { method, webAppUrl, accessToken } = config;
 
+  const formattedCandidate = {
+    "ID": candidate.id,
+    "FULL NAME": candidate.name,
+    "EMAIL": candidate.email,
+    "PHONE NUMBER": candidate.phone,
+    "POSITION": candidate.position,
+    "STAGE": candidate.stage,
+    "EXPERIENCE": candidate.experience,
+    "COMMENT": candidate.notes || '',
+    "SUBMISSION DATE": candidate.submissionDate
+  };
+
   if (method === 'apps_script' && webAppUrl) {
     try {
       const response = await fetch(webAppUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'write_candidate', candidate })
+        body: JSON.stringify({ action: 'write_candidate', candidate: formattedCandidate })
       });
       return response.ok;
     } catch (e) {
@@ -171,14 +183,16 @@ export async function writeSpreadsheetCandidate(config: SyncConfig, candidate: A
       });
       let values: any[][] = [];
       let rowIndex = -1;
-      let headers: string[] = ['id', 'name', 'email', 'phone', 'position', 'stage', 'experience', 'department', 'submissionDate', 'notes', 'education', 'avatarColor', 'initials'];
+      let headers: string[] = ['ID', 'FULL NAME', 'EMAIL', 'PHONE NUMBER', 'POSITION', 'STAGE', 'EXPERIENCE', 'COMMENT', 'SUBMISSION DATE'];
       
       if (response.ok) {
         const data = await response.json();
-        if (data.values) {
+        if (data.values && data.values.length > 0) {
           values = data.values;
           headers = values[0];
-          const idIndex = headers.indexOf('id');
+          // Find the ID column (case-insensitive fallback)
+          let idIndex = headers.indexOf('ID');
+          if (idIndex === -1) idIndex = headers.indexOf('id');
           if (idIndex !== -1) {
             rowIndex = values.findIndex((row, idx) => idx > 0 && row[idIndex] === candidate.id);
           }
@@ -186,8 +200,17 @@ export async function writeSpreadsheetCandidate(config: SyncConfig, candidate: A
       }
 
       const rowValues = headers.map(h => {
-        if (h === 'notes') return candidate.notes || '';
-        return (candidate as any)[h] !== undefined ? String((candidate as any)[h]) : '';
+        const uppercaseHeader = h.toUpperCase();
+        if (uppercaseHeader === 'ID') return candidate.id;
+        if (uppercaseHeader === 'FULL NAME' || uppercaseHeader === 'NAME') return candidate.name;
+        if (uppercaseHeader === 'EMAIL') return candidate.email;
+        if (uppercaseHeader === 'PHONE NUMBER' || uppercaseHeader === 'PHONE') return candidate.phone;
+        if (uppercaseHeader === 'POSITION') return candidate.position;
+        if (uppercaseHeader === 'STAGE') return candidate.stage;
+        if (uppercaseHeader === 'EXPERIENCE') return candidate.experience;
+        if (uppercaseHeader === 'COMMENT' || uppercaseHeader === 'NOTES') return candidate.notes || '';
+        if (uppercaseHeader === 'SUBMISSION DATE' || uppercaseHeader === 'SUBMISSIONDATE') return candidate.submissionDate;
+        return '';
       });
 
       if (rowIndex !== -1) {
@@ -234,8 +257,6 @@ export async function deleteSpreadsheetCandidate(config: SyncConfig, candidateId
     }
   } else if (method === 'google_oauth' && accessToken) {
     try {
-      // Direct REST API deletion is more complex as Sheets API doesn't support "delete row" easily via VALUES endpoint,
-      // but we can clear the values of that row.
       const getRange = 'New Candidates!A1:N1000';
       const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(getRange)}`, {
         headers: { Authorization: `Bearer ${accessToken}` }
@@ -244,15 +265,18 @@ export async function deleteSpreadsheetCandidate(config: SyncConfig, candidateId
         const data = await response.json();
         if (data.values) {
           const headers = data.values[0];
-          const idIndex = headers.indexOf('id');
-          const rowIdx = data.values.findIndex((row: any[], idx: number) => idx > 0 && row[idIndex] === candidateId);
-          if (rowIdx !== -1) {
-            const clearRange = `New Candidates!A${rowIdx + 1}:N${rowIdx + 1}`;
-            await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(clearRange)}:clear`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            return true;
+          let idIndex = headers.indexOf('ID');
+          if (idIndex === -1) idIndex = headers.indexOf('id');
+          if (idIndex !== -1) {
+            const rowIdx = data.values.findIndex((row: any[], idx: number) => idx > 0 && row[idIndex] === candidateId);
+            if (rowIdx !== -1) {
+              const clearRange = `New Candidates!A${rowIdx + 1}:N${rowIdx + 1}`;
+              await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(clearRange)}:clear`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+              return true;
+            }
           }
         }
       }
@@ -267,12 +291,25 @@ export async function deleteSpreadsheetCandidate(config: SyncConfig, candidateId
 export async function writeSpreadsheetJob(config: SyncConfig, job: Job): Promise<boolean> {
   const { method, webAppUrl, accessToken } = config;
 
+  const formattedJob = {
+    "ID": job.id,
+    "POSITION": job.position,
+    "DEPARTMENT": job.department,
+    "CATEGORY (REPLACEMENT OR ADDITIONAL)": job.positionStatus,
+    "TARGET": job.noRequired,
+    "DATE REQUESTED": job.dateRequested,
+    "REQUIRED DATE": job.dateRequired,
+    "JOB DESCRIPTION": job.description,
+    "QUALIFICATIONS": job.qualification,
+    "STATUS": job.status
+  };
+
   if (method === 'apps_script' && webAppUrl) {
     try {
       const response = await fetch(webAppUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'write_job', job })
+        body: JSON.stringify({ action: 'write_job', job: formattedJob })
       });
       return response.ok;
     } catch (e) {
@@ -287,21 +324,35 @@ export async function writeSpreadsheetJob(config: SyncConfig, job: Job): Promise
       });
       let values: any[][] = [];
       let rowIndex = -1;
-      let headers: string[] = ['id', 'title', 'position', 'department', 'positionStatus', 'noRequired', 'openings', 'dateRequested', 'datePosted', 'dateRequired', 'deadline', 'applicants', 'maxApplicants', 'description', 'qualification', 'status'];
+      let headers: string[] = ['ID', 'POSITION', 'DEPARTMENT', 'CATEGORY (REPLACEMENT OR ADDITIONAL)', 'TARGET', 'DATE REQUESTED', 'REQUIRED DATE', 'JOB DESCRIPTION', 'QUALIFICATIONS', 'STATUS'];
 
       if (response.ok) {
         const data = await response.json();
-        if (data.values) {
+        if (data.values && data.values.length > 0) {
           values = data.values;
           headers = values[0];
-          const idIndex = headers.indexOf('id');
+          let idIndex = headers.indexOf('ID');
+          if (idIndex === -1) idIndex = headers.indexOf('id');
           if (idIndex !== -1) {
             rowIndex = values.findIndex((row, idx) => idx > 0 && row[idIndex] === job.id);
           }
         }
       }
 
-      const rowValues = headers.map(h => (job as any)[h] !== undefined ? String((job as any)[h]) : '');
+      const rowValues = headers.map(h => {
+        const uppercaseHeader = h.toUpperCase();
+        if (uppercaseHeader === 'ID') return job.id;
+        if (uppercaseHeader === 'POSITION') return job.position;
+        if (uppercaseHeader === 'DEPARTMENT') return job.department;
+        if (uppercaseHeader === 'CATEGORY (REPLACEMENT OR ADDITIONAL)') return job.positionStatus;
+        if (uppercaseHeader === 'TARGET') return String(job.noRequired);
+        if (uppercaseHeader === 'DATE REQUESTED') return job.dateRequested;
+        if (uppercaseHeader === 'REQUIRED DATE') return job.dateRequired;
+        if (uppercaseHeader === 'JOB DESCRIPTION') return job.description;
+        if (uppercaseHeader === 'QUALIFICATIONS') return job.qualification;
+        if (uppercaseHeader === 'STATUS') return job.status;
+        return '';
+      });
 
       if (rowIndex !== -1) {
         const updateRange = `Job Openings!A${rowIndex + 1}`;
@@ -353,15 +404,18 @@ export async function deleteSpreadsheetJob(config: SyncConfig, jobId: string): P
         const data = await response.json();
         if (data.values) {
           const headers = data.values[0];
-          const idIndex = headers.indexOf('id');
-          const rowIdx = data.values.findIndex((row: any[], idx: number) => idx > 0 && row[idIndex] === jobId);
-          if (rowIdx !== -1) {
-            const clearRange = `Job Openings!A${rowIdx + 1}:Q${rowIdx + 1}`;
-            await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(clearRange)}:clear`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            return true;
+          let idIndex = headers.indexOf('ID');
+          if (idIndex === -1) idIndex = headers.indexOf('id');
+          if (idIndex !== -1) {
+            const rowIdx = data.values.findIndex((row: any[], idx: number) => idx > 0 && row[idIndex] === jobId);
+            if (rowIdx !== -1) {
+              const clearRange = `Job Openings!A${rowIdx + 1}:Q${rowIdx + 1}`;
+              await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(clearRange)}:clear`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+              return true;
+            }
           }
         }
       }
@@ -374,40 +428,48 @@ export async function deleteSpreadsheetJob(config: SyncConfig, jobId: string): P
 
 // Converters to robustly handle type casting from sheet cells to model types
 function parseApplicantFromSheet(row: any): Applicant {
+  const idValue = row.ID || row.id || `app-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  const rawName = row['FULL NAME'] || row.name || row.Name || 'Anonymous';
+  const rawInitials = rawName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'A';
+
   return {
-    id: row.id || `app-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-    name: row.name || 'Anonymous',
-    email: row.email || '',
-    phone: row.phone || '',
-    position: row.position || 'Paralegal',
-    stage: (row.stage || 'screening') as Applicant['stage'],
-    experience: row.experience || '',
+    id: String(idValue),
+    name: String(rawName),
+    email: String(row.EMAIL || row.email || ''),
+    phone: String(row['PHONE NUMBER'] || row.phone || ''),
+    position: String(row.POSITION || row.position || 'Paralegal'),
+    stage: (String(row.STAGE || row.stage || 'screening').toLowerCase() || 'screening') as Applicant['stage'],
+    experience: String(row.EXPERIENCE || row.experience || ''),
     avatarColor: row.avatarColor || '#6366f1',
-    initials: row.initials || 'A',
+    initials: rawInitials,
     department: row.department || 'Litigation',
-    submissionDate: row.submissionDate || new Date().toISOString().split('T')[0],
-    notes: row.notes || '',
+    submissionDate: String(row['SUBMISSION DATE'] || row.submissionDate || new Date().toISOString().split('T')[0]),
+    notes: String(row.COMMENT || row.notes || ''),
     education: row.education || ''
   };
 }
 
 function parseJobFromSheet(row: any): Job {
+  const idValue = row.ID || row.id || `job-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  const positionValue = row.POSITION || row.position || row.title || 'Officer Position';
+  const targetVal = row.TARGET || row.noRequired || '1';
+  
   return {
-    id: row.id || `job-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-    title: row.title || row.position || 'Officer Position',
-    position: row.position || row.title || 'Officer Position',
-    department: row.department || 'Litigation Department',
-    positionStatus: row.positionStatus || 'Additional',
-    noRequired: parseInt(row.noRequired, 10) || 1,
-    openings: parseInt(row.openings, 10) || 1,
-    dateRequested: row.dateRequested || new Date().toISOString().split('T')[0],
-    datePosted: row.datePosted || new Date().toISOString().split('T')[0],
-    dateRequired: row.dateRequired || new Date().toISOString().split('T')[0],
-    deadline: row.deadline || '',
-    applicants: parseInt(row.applicants, 10) || 0,
-    maxApplicants: parseInt(row.maxApplicants, 10) || 10,
-    description: row.description || '',
-    qualification: row.qualification || '',
-    status: (row.status || 'OPEN') as Job['status']
+    id: String(idValue),
+    title: String(positionValue),
+    position: String(positionValue),
+    department: String(row.DEPARTMENT || row.department || 'Litigation Department'),
+    positionStatus: String(row['CATEGORY (REPLACEMENT OR ADDITIONAL)'] || row.positionStatus || 'Replacement'),
+    noRequired: parseInt(String(targetVal), 10) || 1,
+    openings: parseInt(String(row.openings || targetVal), 10) || 1,
+    dateRequested: String(row['DATE REQUESTED'] || row.dateRequested || new Date().toISOString().split('T')[0]),
+    datePosted: String(row.datePosted || row['DATE REQUESTED'] || new Date().toISOString().split('T')[0]),
+    dateRequired: String(row['REQUIRED DATE'] || row.dateRequired || new Date().toISOString().split('T')[0]),
+    deadline: String(row.deadline || ''),
+    applicants: parseInt(String(row.applicants || 0), 10) || 0,
+    maxApplicants: parseInt(String(row.maxApplicants || 10), 10) || 10,
+    description: String(row['JOB DESCRIPTION'] || row.description || ''),
+    qualification: String(row.QUALIFICATIONS || row.qualification || ''),
+    status: (String(row.STATUS || row.status || 'OPEN').toUpperCase() || 'OPEN') as Job['status']
   };
 }

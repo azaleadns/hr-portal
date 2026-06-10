@@ -151,36 +151,89 @@ function writeRow(ss, sheetName, data, keyName) {
   }
 
   var sheet = ss.getSheetByName(sheetName);
+  var normalizedSheetName = sheetName.toLowerCase();
+  var allowedHeaders = [];
+  if (normalizedSheetName === "new candidates" || normalizedSheetName === "new candidate") {
+    allowedHeaders = ['ID', 'FULL NAME', 'EMAIL', 'PHONE NUMBER', 'POSITION', 'STAGE', 'EXPERIENCE', 'COMMENT', 'SUBMISSION DATE'];
+  } else if (normalizedSheetName === "job openings" || normalizedSheetName === "job opening") {
+    allowedHeaders = ['ID', 'POSITION', 'DEPARTMENT', 'CATEGORY (REPLACEMENT OR ADDITIONAL)', 'TARGET', 'DATE REQUESTED', 'REQUIRED DATE', 'JOB DESCRIPTION', 'QUALIFICATIONS', 'STATUS'];
+  }
+
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
-    var headers = Object.keys(data);
-    sheet.appendRow(headers);
+    sheet.appendRow(allowedHeaders);
   }
   
-  var values = sheet.getDataRange().getValues();
-  var headers = values[0];
-  
-  Object.keys(data).forEach(function (k) {
-    if (headers.indexOf(k) === -1) {
-      headers.push(k);
-      sheet.getRange(1, headers.length).setValue(k);
+  // Force actual columns in sheet to strictly match allowedHeaders
+  if (allowedHeaders.length > 0) {
+    var lastCol = sheet.getLastColumn();
+    if (lastCol > 0) {
+      var currentHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      // 1. Delete unauthorized columns from right to left
+      for (var i = currentHeaders.length - 1; i >= 0; i--) {
+        var hName = String(currentHeaders[i]).trim().toUpperCase();
+        var isAllowed = false;
+        for (var a = 0; a < allowedHeaders.length; a++) {
+          if (allowedHeaders[a].toUpperCase() === hName) {
+            isAllowed = true;
+            break;
+          }
+        }
+        if (!isAllowed && currentHeaders[i] !== "") {
+          sheet.deleteColumn(i + 1);
+        }
+      }
     }
-  });
+    
+    // 2. Refresh columns check
+    lastCol = sheet.getLastColumn();
+    if (lastCol === 0) {
+      sheet.appendRow(allowedHeaders);
+    } else {
+      currentHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      // Append any missing allowed headers
+      for (var a = 0; a < allowedHeaders.length; a++) {
+        var found = false;
+        for (var i = 0; i < currentHeaders.length; i++) {
+          if (String(currentHeaders[i]).trim().toUpperCase() === allowedHeaders[a].toUpperCase()) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          lastCol++;
+          sheet.getRange(1, lastCol).setValue(allowedHeaders[a]);
+        }
+      }
+    }
+  }
   
   var freshValues = sheet.getDataRange().getValues();
   var finalHeaders = freshValues[0];
   var rowIndex = -1;
   var keyColIndex = finalHeaders.indexOf(keyName);
+  if (keyColIndex === -1) {
+    keyColIndex = finalHeaders.indexOf(keyName.toUpperCase());
+  }
+  if (keyColIndex === -1) {
+    keyColIndex = finalHeaders.indexOf(keyName.toLowerCase());
+  }
+  
+  var lookupValue = data[keyName] !== undefined ? data[keyName] : (data[keyName.toUpperCase()] !== undefined ? data[keyName.toUpperCase()] : data[keyName.toLowerCase()]);
   
   for (var i = 1; i < freshValues.length; i++) {
-    if (freshValues[i][keyColIndex] == data[keyName]) {
+    if (freshValues[i][keyColIndex] == lookupValue) {
       rowIndex = i + 1;
       break;
     }
   }
   
   var rowValues = finalHeaders.map(function(k) {
-    return data[k] !== undefined ? data[k] : "";
+    var lookupKey = k;
+    if (data[lookupKey] !== undefined) return data[lookupKey];
+    if (data[lookupKey.toUpperCase()] !== undefined) return data[lookupKey.toUpperCase()];
+    if (data[lookupKey.toLowerCase()] !== undefined) return data[lookupKey.toLowerCase()];
+    return "";
   });
   
   if (rowIndex !== -1) {
@@ -207,6 +260,12 @@ function deleteRow(ss, sheetName, keyValue, keyName) {
   if (values.length <= 1) return;
   var headers = values[0];
   var keyColIndex = headers.indexOf(keyName);
+  if (keyColIndex === -1) {
+    keyColIndex = headers.indexOf(keyName.toUpperCase());
+  }
+  if (keyColIndex === -1) {
+    keyColIndex = headers.indexOf(keyName.toLowerCase());
+  }
   if (keyColIndex === -1) return;
   
   for (var i = values.length - 1; i >= 1; i--) {
@@ -221,6 +280,40 @@ function deleteRow(ss, sheetName, keyValue, keyName) {
 
 function formatSheetTable(sheet, sheetName) {
   try {
+    var normalizedSheetName = String(sheetName).trim().toLowerCase();
+    
+    var allowedHeaders = [];
+    if (normalizedSheetName === "new candidates" || normalizedSheetName === "new candidate") {
+      allowedHeaders = ['ID', 'FULL NAME', 'EMAIL', 'PHONE NUMBER', 'POSITION', 'STAGE', 'EXPERIENCE', 'COMMENT', 'SUBMISSION DATE'];
+    } else if (normalizedSheetName === "job openings" || normalizedSheetName === "job opening") {
+      allowedHeaders = ['ID', 'POSITION', 'DEPARTMENT', 'CATEGORY (REPLACEMENT OR ADDITIONAL)', 'TARGET', 'DATE REQUESTED', 'REQUIRED DATE', 'JOB DESCRIPTION', 'QUALIFICATIONS', 'STATUS'];
+    }
+    
+    if (allowedHeaders.length > 0) {
+      var lastCol = sheet.getLastColumn();
+      if (lastCol > 0) {
+        var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+        // Loop backwards to safely delete unauthorized columns
+        for (var i = headers.length - 1; i >= 0; i--) {
+          var hName = String(headers[i]).trim().toUpperCase();
+          var isAllowed = false;
+          for (var a = 0; a < allowedHeaders.length; a++) {
+            if (allowedHeaders[a].toUpperCase() === hName) {
+              isAllowed = true;
+              break;
+            }
+          }
+          if (!isAllowed && headers[i] !== "") {
+            sheet.deleteColumn(i + 1);
+          }
+        }
+      }
+      
+      if (sheet.getLastColumn() === 0) {
+        sheet.appendRow(allowedHeaders);
+      }
+    }
+
     var lastRow = sheet.getLastRow();
     var lastColumn = sheet.getLastColumn();
     if (lastRow === 0 || lastColumn === 0) return;
