@@ -10,6 +10,7 @@ import AddCandidateModal from './components/AddCandidateModal';
 import PostPositionModal from './components/PostPositionModal';
 import { Job, Applicant, Employee, Activity } from './types';
 import { applicants as initialApplicants, jobs as initialJobs, employees as initialEmployees } from './data/mockData';
+import { getSyncConfig, fetchSpreadsheetCandidates, fetchSpreadsheetJobs, writeSpreadsheetCandidate, deleteSpreadsheetCandidate, writeSpreadsheetJob, deleteSpreadsheetJob } from './utils/googleSheetsSync';
 import Login from './components/Login';
 import './App.css';
 
@@ -128,6 +129,42 @@ export default function App() {
     localStorage.setItem('stlaf_jobs', JSON.stringify(jobs));
   }, [jobs]);
 
+  const [isSyncingSheets, setIsSyncingSheets] = useState(false);
+
+  const loadSheetsDatabase = async () => {
+    const syncConfig = getSyncConfig();
+    if (syncConfig.method !== 'local') {
+      setIsSyncingSheets(true);
+      try {
+        const fetchedCandidates = await fetchSpreadsheetCandidates(syncConfig);
+        if (fetchedCandidates) {
+          setApplicants(fetchedCandidates);
+        }
+        const fetchedJobs = await fetchSpreadsheetJobs(syncConfig);
+        if (fetchedJobs) {
+          setJobs(fetchedJobs);
+        }
+      } catch (err) {
+        console.error('Error auto-syncing with Google Sheets:', err);
+      } finally {
+        setIsSyncingSheets(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadSheetsDatabase();
+
+    const handleSyncConfigUpdate = () => {
+      loadSheetsDatabase();
+    };
+
+    window.addEventListener('sheets_sync_config_updated', handleSyncConfigUpdate);
+    return () => {
+      window.removeEventListener('sheets_sync_config_updated', handleSyncConfigUpdate);
+    };
+  }, []);
+
   const updateApplicantStage = (applicantId: string, newStage: Applicant['stage']) => {
     const applicant = applicants.find(app => app.id === applicantId);
     if (applicant) {
@@ -191,15 +228,29 @@ export default function App() {
       setActivities(prev => [newActivity, ...prev]);
     }
 
-    setApplicants(prev =>
-      prev.map(app =>
+    setApplicants(prev => {
+      const updated = prev.map(app =>
         app.id === applicantId ? { ...app, stage: newStage } : app
-      )
-    );
+      );
+      const target = updated.find(app => app.id === applicantId);
+      if (target) {
+        const syncConfig = getSyncConfig();
+        if (syncConfig.method !== 'local') {
+          writeSpreadsheetCandidate(syncConfig, target);
+        }
+      }
+      return updated;
+    });
   };
 
   const addJob = (newJob: Job) => {
     setJobs(prev => [newJob, ...prev]);
+    
+    // Writeback to Google Sheets
+    const syncConfig = getSyncConfig();
+    if (syncConfig.method !== 'local') {
+      writeSpreadsheetJob(syncConfig, newJob);
+    }
     
     // Add activity logging
     const newActivity: Activity = {
@@ -214,6 +265,12 @@ export default function App() {
 
   const closeJob = (jobId: string, jobTitle: string) => {
     setJobs(prev => prev.filter(j => j.id !== jobId));
+    
+    // Writeback to Google Sheets
+    const syncConfig = getSyncConfig();
+    if (syncConfig.method !== 'local') {
+      deleteSpreadsheetJob(syncConfig, jobId);
+    }
     
     // Add activity logging
     const newActivity: Activity = {
@@ -235,6 +292,12 @@ export default function App() {
   const addCandidate = (candidate: Applicant) => {
     setApplicants(prev => [candidate, ...prev]);
     
+    // Writeback to Google Sheets
+    const syncConfig = getSyncConfig();
+    if (syncConfig.method !== 'local') {
+      writeSpreadsheetCandidate(syncConfig, candidate);
+    }
+    
     // Add activity logging
     const newActivity: Activity = {
       id: `act-${Date.now()}`,
@@ -249,6 +312,12 @@ export default function App() {
   const deleteCandidate = (candidateId: string) => {
     const candidate = applicants.find(app => app.id === candidateId);
     setApplicants(prev => prev.filter(app => app.id !== candidateId));
+    
+    // Writeback to Google Sheets
+    const syncConfig = getSyncConfig();
+    if (syncConfig.method !== 'local') {
+      deleteSpreadsheetCandidate(syncConfig, candidateId);
+    }
     
     // Add activity logging
     if (candidate) {
