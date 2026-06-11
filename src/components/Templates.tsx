@@ -226,6 +226,11 @@ export default function Templates() {
     () => DEFAULT_TEMPLATES.find((template) => template.id === previewTemplateId) || null,
     [previewTemplateId]
   );
+  const sanitizedEditorHtml = useMemo(() => sanitizeTemplateHtml(editorHtml), [editorHtml]);
+  const sanitizedPreviewHtml = useMemo(
+    () => (previewTemplate ? sanitizeTemplateHtml(getTemplateContent(previewTemplate)) : ''),
+    [previewTemplate, getTemplateContent]
+  );
 
   const persistTemplate = useCallback(
     (templateId: string, content: string, showToast = false) => {
@@ -258,7 +263,7 @@ export default function Templates() {
       }
 
       setActiveTemplateId(templateId);
-      setEditorHtml(sanitizeTemplateHtml(getTemplateContent(template)));
+      setEditorHtml(getTemplateContent(template));
       setIsEditorOpen(true);
       setPreviewTemplateId(null);
     },
@@ -282,15 +287,13 @@ export default function Templates() {
       return;
     }
 
-    if (editorRef.current.innerHTML !== editorHtml) {
-      editorRef.current.innerHTML = editorHtml;
-    }
-  }, [editorHtml, isEditorOpen]);
+    editorRef.current.innerHTML = sanitizeTemplateHtml(editorHtml);
+  }, [isEditorOpen, activeTemplateId]);
 
   const runEditorCommand = (command: string, value?: string) => {
     editorRef.current?.focus();
     document.execCommand(command, false, value);
-    const latestHtml = sanitizeTemplateHtml(editorRef.current?.innerHTML || '');
+    const latestHtml = editorRef.current?.innerHTML || '';
     setEditorHtml(latestHtml);
   };
 
@@ -392,7 +395,7 @@ export default function Templates() {
             <div className="min-h-0 flex-1 overflow-y-auto p-6">
               <article
                 className="mx-auto h-full max-w-4xl rounded-xl border border-slate-200 bg-slate-50 p-8 text-sm leading-7 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(getTemplateContent(previewTemplate)) }}
+                dangerouslySetInnerHTML={{ __html: sanitizedPreviewHtml }}
               />
             </div>
 
@@ -468,7 +471,7 @@ export default function Templates() {
                   ref={editorRef}
                   contentEditable
                   suppressContentEditableWarning
-                  onInput={(event) => setEditorHtml(sanitizeTemplateHtml((event.currentTarget as HTMLDivElement).innerHTML))}
+                  onInput={(event) => setEditorHtml((event.currentTarget as HTMLDivElement).innerHTML)}
                   className="h-full min-h-[340px] overflow-y-auto p-5 text-sm leading-7 text-slate-700 outline-none dark:text-slate-100"
                 />
               </section>
@@ -477,7 +480,7 @@ export default function Templates() {
                 <div className="border-b border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-300">Live Preview</div>
                 <article
                   className="h-full min-h-[340px] overflow-y-auto p-5 text-sm leading-7 text-slate-700 dark:text-slate-100"
-                  dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(editorHtml) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizedEditorHtml }}
                 />
               </section>
             </div>
