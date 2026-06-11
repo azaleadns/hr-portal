@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>STLAF - HR Portal</title>
+    <script>
+      // Patch window.fetch with a setter to prevent errors in sandboxed/iframe environments
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          if (originalFetch) {
+            var _fetch = originalFetch;
+            Object.defineProperty(window, 'fetch', {
+              get: function() {
+                return _fetch;
+              },
+              set: function(val) {
+                _fetch = val;
+              },
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e) {
+          console.warn("Unable to redefine window.fetch:", e);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-DROupvRf.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B7GN7Xfy.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
