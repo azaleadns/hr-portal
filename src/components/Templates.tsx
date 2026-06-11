@@ -1,331 +1,496 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Printer, Copy, FileText, Check, FileSignature, HelpCircle } from 'lucide-react';
-import './Templates.css';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  CheckCircle2,
+  Edit3,
+  Eye,
+  FileDown,
+  Italic,
+  List,
+  ListOrdered,
+  Search,
+  Type,
+  Underline,
+  Undo2,
+  Redo2,
+  X
+} from 'lucide-react';
 
 interface TemplateDef {
   id: string;
-  name: string;
-  subject: string;
-  defaultText: string;
+  title: string;
+  description: string;
+  updatedAt: string;
+  content: string;
 }
+
+interface StoredTemplateState {
+  content: string;
+  updatedAt: string;
+}
+
+const STORAGE_KEY = 'hrPortal.templates.v2';
 
 const DEFAULT_TEMPLATES: TemplateDef[] = [
   {
-    id: 'contract',
-    name: 'Employment Contract',
-    subject: 'CONTRACT OF EMPLOYMENT',
-    defaultText: `This EMPLOYMENT CONTRACT is made and executed this {currentDate} in Pasig City, Metro Manila, Philippines, by and between:
-
-ST. LAWRENCE LAW CORPORATION (STLAF), a law coporation duly registered under Philippine laws, with primary chambers at 777 Emerald Avenue, Ortigas, Pasig City, represented herein by its Managing Partner, hereafter referred to as "EMPLOYER";
-
-- and -
-
-{candidateName}, of legal age, Filipino citizen, residing at Pasig, Manila, hereinafter referred to as the "EMPLOYEE".
-
-WITNESSETH: THAT —
-
-1. POSITION AND TRIAL PERIOD:
-The Employer hereby employs the Employee as {position} under the {department} Department starting {startDate}. The Employee's status shall be Probationary for a period of six (6) months, during which the Employee shall be assessed according to established regulations of STLAF.
-
-2. COMPENSATION AND REMUNERATION:
-The Employee shall receive a monthly gross salary of PHP {salary}, payable bi-monthly on the 15th and 30th of each calendar month, subject to standard legally mandated government deductions (SSS, PhilHealth, Pag-IBIG HDMF, and TIN withholding taxes).
-
-3. RESPONSIBILITIES AND PROFESSIONAL STANDARDS:
-The Employee covenants to fulfill all trial litigation briefs, contract creations, legal drafts, client consults, and other responsibilities related to the assigned counsel level with utmost precision and strict adherence to the Supreme Court's Code of Professional Responsibility and Accountability.
-
-IN WITNESS WHEREOF, the parties have signed this covenant.`
+    id: 'employment-contract',
+    title: 'Employment Contract',
+    description: 'Formal employment agreement with terms, compensation, and compliance clauses.',
+    updatedAt: '2026-06-10T08:00:00.000Z',
+    content: `<h1>CONTRACT OF EMPLOYMENT</h1>
+<p>This Employment Contract is entered into on <strong>June 11, 2026</strong> between <strong>ST. LAWRENCE LAW CORPORATION (STLAF)</strong> and <strong>Employee Name</strong>.</p>
+<h2>1. Role and Department</h2>
+<p>The Employee is appointed as <strong>Position Title</strong> under the <strong>Department</strong>.</p>
+<h2>2. Compensation</h2>
+<p>The agreed monthly compensation is <strong>PHP 45,000.00</strong>, subject to mandatory deductions and payroll policies.</p>
+<h2>3. Key Clauses</h2>
+<ul>
+  <li>Confidentiality obligations remain in force after separation.</li>
+  <li>Performance review applies during probationary period.</li>
+  <li>Company handbook and code of conduct are enforceable.</li>
+</ul>
+<p>Signed by both parties to confirm acceptance of terms.</p>`
   },
   {
-    id: 'offer',
-    name: 'Official Offer Letter',
-    subject: 'LETTER OF OFFER',
-    defaultText: `Date: {currentDate}
-
-Dear {candidateName},
-
-Following our extensive evaluations and recruitment reviews, ST. LAWRENCE LAW CORPORATION (STLAF) is delighted to extend this official offer for the position of {position} under our {department} Department.
-
-Kindly take note of our primary offer specifications outlined below:
-
-- DESIGNATION: {position}
-- WORKSTATION: Pasig Chambers, Ortigas, Metro Manila
-- COMPENSATION STATUS: Monthly base structural salary of PHP {salary}
-- ADDITIONAL ALLOWANCES: Seniority allowances of PHP {allowance} monthly
-- COMMENCEMENT OF DUTIES: {startDate}
-
-To confirm your formal acceptance of this legal career announcement at STLAF, please return a signed duplicate copy of this document on or before {responseDeadline}.
-
-We look forward to collaborating with you inside our counseling suite.
-
-Warm regards,
-
-MANAGING PARTNER
-St. Lawrence Law Offices`
+    id: 'offer-letter',
+    title: 'Official Offer Letter',
+    description: 'Candidate-facing offer letter with role details, start date, and acceptance timeline.',
+    updatedAt: '2026-06-08T14:30:00.000Z',
+    content: `<h1>LETTER OF OFFER</h1>
+<p>Date: <strong>June 11, 2026</strong></p>
+<p>Dear <strong>Candidate Name</strong>,</p>
+<p>We are pleased to offer you the role of <strong>Position Title</strong> with STLAF.</p>
+<h2>Offer Summary</h2>
+<ol>
+  <li>Work setup: On-site, Pasig City</li>
+  <li>Monthly salary: PHP 45,000.00</li>
+  <li>Allowance: PHP 5,000.00</li>
+  <li>Start date: June 15, 2026</li>
+</ol>
+<p>Please sign and return this letter on or before <strong>June 18, 2026</strong>.</p>
+<p>Warm regards,<br /><strong>HR Department</strong></p>`
   },
   {
-    id: 'coe',
-    name: 'Certificate of Employment',
-    subject: 'CERTIFICATE OF EMPLOYMENT',
-    defaultText: `TO WHOM IT MAY CONCERN:
-
-This is to certify that {candidateName} has been actively employed with ST. LAWRENCE LAW CORPORATION (STLAF) as {position} under our specialized {department} Department.
-
-Employee service parameters are recorded within our database files as follows:
-
-- STARTDATE OF COVENANT: {startDate}
-- MONTHLY REMUNERATION STATUS: PHP {salary} Monthly Gross
-- CURRENT STANDING: Active In Good Standing
-- ADHERED CONDUIT: Excellent litigation reviews and compliance standards
-
-This certificate of employment is issued for verification or other legal compliance queries on this {currentDate} at the Ortigas Chambers of Pasig City, Philippines.
-
-
-SUITE MANAGEMENT
-Human Resources, STLAF Corporation`
+    id: 'certificate-employment',
+    title: 'Certificate of Employment',
+    description: 'Verification document for active employees and current employment standing.',
+    updatedAt: '2026-06-01T09:00:00.000Z',
+    content: `<h1>CERTIFICATE OF EMPLOYMENT</h1>
+<p>To Whom It May Concern:</p>
+<p>This is to certify that <strong>Employee Name</strong> is employed as <strong>Position Title</strong> at ST. LAWRENCE LAW CORPORATION (STLAF).</p>
+<h2>Employment Details</h2>
+<ul>
+  <li>Department: Litigation</li>
+  <li>Status: Active</li>
+  <li>Date hired: June 15, 2026</li>
+</ul>
+<p>This certificate is issued upon request for legal and administrative purposes.</p>
+<p>Issued this <strong>June 11, 2026</strong> in Pasig City, Philippines.</p>`
   }
 ];
 
-export default function Templates() {
-  const [selectedTemplateId, setSelectedTemplateId] = useState('contract');
-  const [copied, setCopied] = useState(false);
+const FONT_SIZE_OPTIONS = [
+  { label: 'Small', value: '2' },
+  { label: 'Normal', value: '3' },
+  { label: 'Large', value: '4' },
+  { label: 'XL', value: '5' }
+];
 
-  // Form editable state variables
-  const [candidateName, setCandidateName] = useState('Elena Santos');
-  const [position, setPosition] = useState('Junior Associate Counsel');
-  const [department, setDepartment] = useState('Litigation');
-  const [startDate, setStartDate] = useState('2026-06-15');
-  const [salary, setSalary] = useState('45,000.00');
-  const [allowance, setAllowance] = useState('5,000.00');
-  const [responseDeadline, setResponseDeadline] = useState('2026-06-10');
+function sanitizeTemplateHtml(html: string): string {
+  if (typeof window === 'undefined') {
+    return html;
+  }
 
-  // Custom text for user edits - loaded when selected template changes
-  const [editableTemplateText, setEditableTemplateText] = useState('');
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
 
-  const currentTemplate = useMemo(() => {
-    return DEFAULT_TEMPLATES.find(t => t.id === selectedTemplateId) || DEFAULT_TEMPLATES[0];
-  }, [selectedTemplateId]);
+  doc.querySelectorAll('script,style,iframe,object,embed,link,meta').forEach((node) => node.remove());
 
-  // Load default template structure on mount / switch
-  useEffect(() => {
-    setEditableTemplateText(currentTemplate.defaultText);
-  }, [selectedTemplateId, currentTemplate]);
-
-  // Dynamically replace variables inside our text template
-  const compiledText = useMemo(() => {
-    const today = new Date().toLocaleDateString('en-PH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+  doc.querySelectorAll('*').forEach((element) => {
+    [...element.attributes].forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      const value = attribute.value.toLowerCase();
+      if (name.startsWith('on') || value.includes('javascript:')) {
+        element.removeAttribute(attribute.name);
+      }
     });
+  });
 
-    let res = editableTemplateText;
-    res = res.replace(/{candidateName}/g, candidateName);
-    res = res.replace(/{position}/g, position);
-    res = res.replace(/{department}/g, department);
-    res = res.replace(/{startDate}/g, startDate);
-    res = res.replace(/{salary}/g, salary);
-    res = res.replace(/{allowance}/g, allowance);
-    res = res.replace(/{responseDeadline}/g, responseDeadline);
-    res = res.replace(/{currentDate}/g, today);
-    return res;
-  }, [editableTemplateText, candidateName, position, department, startDate, salary, allowance, responseDeadline]);
+  return doc.body.innerHTML;
+}
 
-  const handleCopyClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(compiledText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy text', err);
+function readStoredTemplates(): Record<string, StoredTemplateState> {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, StoredTemplateState>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function formatDateLabel(dateText: string): string {
+  return new Date(dateText).toLocaleDateString('en-PH', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric'
+  });
+}
+
+function exportHtmlToPdfLikePrint(title: string, html: string) {
+  const printWindow = window.open('', '_blank', 'width=1100,height=800');
+  if (!printWindow) {
+    return false;
+  }
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          body { font-family: 'Inter', Arial, sans-serif; margin: 24px; color: #1a2536; }
+          h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; color: #1a2849; }
+          h1 { font-size: 28px; border-bottom: 2px solid #c9a961; padding-bottom: 8px; }
+          h2 { font-size: 20px; margin-top: 20px; }
+          p, li { font-size: 14px; line-height: 1.7; }
+          ul, ol { padding-left: 22px; }
+        </style>
+      </head>
+      <body>${sanitizeTemplateHtml(html)}</body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  return true;
+}
+
+export default function Templates() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [templateStates, setTemplateStates] = useState<Record<string, StoredTemplateState>>({});
+  const [activeTemplateId, setActiveTemplateId] = useState(DEFAULT_TEMPLATES[0].id);
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editorHtml, setEditorHtml] = useState('');
+  const [fontSize, setFontSize] = useState('3');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [lastAutoSavedAt, setLastAutoSavedAt] = useState<string | null>(null);
+
+  const editorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setTemplateStates(readStoredTemplates());
+  }, []);
+
+  useEffect(() => {
+    if (!toastMessage) {
+      return;
     }
+
+    const timer = window.setTimeout(() => setToastMessage(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
+
+  const getTemplateContent = useCallback(
+    (template: TemplateDef) => templateStates[template.id]?.content || template.content,
+    [templateStates]
+  );
+
+  const getTemplateUpdatedAt = useCallback(
+    (template: TemplateDef) => templateStates[template.id]?.updatedAt || template.updatedAt,
+    [templateStates]
+  );
+
+  const filteredTemplates = useMemo(() => {
+    const normalizedQuery = searchTerm.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return DEFAULT_TEMPLATES;
+    }
+
+    return DEFAULT_TEMPLATES.filter((template) => {
+      const haystack = `${template.title} ${template.description}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [searchTerm]);
+
+  const activeTemplate = useMemo(
+    () => DEFAULT_TEMPLATES.find((template) => template.id === activeTemplateId) || DEFAULT_TEMPLATES[0],
+    [activeTemplateId]
+  );
+
+  const previewTemplate = useMemo(
+    () => DEFAULT_TEMPLATES.find((template) => template.id === previewTemplateId) || null,
+    [previewTemplateId]
+  );
+
+  const persistTemplate = useCallback(
+    (templateId: string, content: string, showToast = false) => {
+      const now = new Date().toISOString();
+      setTemplateStates((current) => {
+        const next = {
+          ...current,
+          [templateId]: {
+            content: sanitizeTemplateHtml(content),
+            updatedAt: now
+          }
+        };
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+
+      if (showToast) {
+        setToastMessage('Template saved successfully.');
+      }
+      setLastAutoSavedAt(now);
+    },
+    []
+  );
+
+  const openEditor = useCallback(
+    (templateId: string) => {
+      const template = DEFAULT_TEMPLATES.find((item) => item.id === templateId);
+      if (!template) {
+        return;
+      }
+
+      setActiveTemplateId(templateId);
+      setEditorHtml(sanitizeTemplateHtml(getTemplateContent(template)));
+      setIsEditorOpen(true);
+      setPreviewTemplateId(null);
+    },
+    [getTemplateContent]
+  );
+
+  useEffect(() => {
+    if (!isEditorOpen || !activeTemplateId) {
+      return;
+    }
+
+    const debounce = window.setTimeout(() => {
+      persistTemplate(activeTemplateId, editorHtml);
+    }, 700);
+
+    return () => window.clearTimeout(debounce);
+  }, [editorHtml, isEditorOpen, activeTemplateId, persistTemplate]);
+
+  useEffect(() => {
+    if (!editorRef.current || !isEditorOpen) {
+      return;
+    }
+
+    if (editorRef.current.innerHTML !== editorHtml) {
+      editorRef.current.innerHTML = editorHtml;
+    }
+  }, [editorHtml, isEditorOpen]);
+
+  const runEditorCommand = (command: string, value?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, value);
+    const latestHtml = sanitizeTemplateHtml(editorRef.current?.innerHTML || '');
+    setEditorHtml(latestHtml);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleFontSizeChange = (value: string) => {
+    setFontSize(value);
+    runEditorCommand('fontSize', value);
   };
 
-  const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset the current template to defaults?')) {
-      setEditableTemplateText(currentTemplate.defaultText);
-    }
+  const handleExport = (template: TemplateDef) => {
+    const html = getTemplateContent(template);
+    const didStart = exportHtmlToPdfLikePrint(template.title, html);
+    setToastMessage(didStart ? 'Export started. Use browser dialog to save as PDF.' : 'Please allow pop-ups to export PDF.');
+  };
+
+  const handleManualSave = () => {
+    persistTemplate(activeTemplate.id, editorHtml, true);
   };
 
   return (
-    <div className="templates-container page-layout">
-      {/* Dynamic left options & fields panel */}
-      <div className="templates-sidebar no-print">
-        <h2 className="templates-title">Document Desk</h2>
-        
-        <div className="select-wrapper">
-          <label className="select-label">Select Paper Template</label>
-          <select 
-            className="template-dropdown"
-            value={selectedTemplateId}
-            onChange={(e) => setSelectedTemplateId(e.target.value)}
-          >
-            {DEFAULT_TEMPLATES.map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Input variables */}
-        <div style={{ marginTop: '8px' }}>
-          <h3 style={{ fontSize: '12px', fontWeight: 'bold', color: '#1a2849', borderBottom: '1px solid #e1e8f0', paddingBottom: '4px', marginBottom: '12px' }}>
-            Placeholder Variables
-          </h3>
-          
-          <div className="variables-section">
-            <div className="var-input-group">
-              <label className="var-label">Counsel/Employee Name</label>
-              <input 
-                type="text" 
-                className="var-input" 
-                value={candidateName} 
-                onChange={(e) => setCandidateName(e.target.value)} 
-              />
-            </div>
-
-            <div className="var-input-group">
-              <label className="var-label">Target Position</label>
-              <input 
-                type="text" 
-                className="var-input" 
-                value={position} 
-                onChange={(e) => setPosition(e.target.value)} 
-              />
-            </div>
-
-            <div className="var-input-group">
-              <label className="var-label">Department / Chamber</label>
-              <input 
-                type="text" 
-                className="var-input" 
-                value={department} 
-                onChange={(e) => setDepartment(e.target.value)} 
-              />
-            </div>
-
-            <div className="var-input-group">
-              <label className="var-label">Commencement Date</label>
-              <input 
-                type="date" 
-                className="var-input" 
-                value={startDate} 
-                onChange={(e) => setStartDate(e.target.value)} 
-              />
-            </div>
-
-            <div className="var-input-group">
-              <label className="var-label">Base Monthly Salary (₱)</label>
-              <input 
-                type="text" 
-                className="var-input" 
-                value={salary} 
-                onChange={(e) => setSalary(e.target.value)} 
-              />
-            </div>
-
-            {selectedTemplateId === 'offer' && (
-              <>
-                <div className="var-input-group">
-                  <label className="var-label">Allowance Monthly (₱)</label>
-                  <input 
-                    type="text" 
-                    className="var-input" 
-                    value={allowance} 
-                    onChange={(e) => setAllowance(e.target.value)} 
-                  />
-                </div>
-
-                <div className="var-input-group">
-                  <label className="var-label">Response Deadline</label>
-                  <input 
-                    type="date" 
-                    className="var-input" 
-                    value={responseDeadline} 
-                    onChange={(e) => setResponseDeadline(e.target.value)} 
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Tip block */}
-        <div style={{ marginTop: 'auto', background: '#eff6ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-          <p style={{ fontSize: '11px', color: '#1e3a8a', lineHeight: '1.4', display: 'flex', gap: '6px' }}>
-            <HelpCircle size={15} style={{ flexShrink: 0 }} />
-            <span>Use the fields above to automatically compile dynamic legal drafts. You can also edit the document body directly.</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Main visual workspace */}
-      <div className="templates-workspace">
-        <div className="workspace-actions no-print">
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <FileSignature size={18} color="#c9a961" />
-              <span>Drafting Mode: {currentTemplate.name}</span>
-            </span>
+    <div className="page-layout text-slate-800 dark:text-slate-100">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition dark:border-slate-700 dark:bg-[#1A2536]">
+        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-[#1a2849] dark:text-[#f3e3bd]">Templates Workspace</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-300">Professional HR document templates with editor, preview, and export controls.</p>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="action-btn-styled action-btn-secondary" onClick={handleReset}>
-              Reset Template
-            </button>
-            <button className="action-btn-styled action-btn-secondary" onClick={handleCopyClipboard}>
-              {copied ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
-              <span>{copied ? 'Copied!' : 'Copy Text'}</span>
-            </button>
-            <button className="action-btn-styled action-btn-primary" onClick={handlePrint}>
-              <Printer size={14} />
-              <span>Print / PDF</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Parchment preview stage */}
-        <div className="document-outer">
-          <div className="document-page">
-            <div className="letterhead">
-              <h1 className="letterhead-title" style={{ fontFamily: 'Playfair Display' }}>ST. LAWRENCE LAW OFFICES</h1>
-              <span className="letterhead-sub">Chambers of Trial Advocacy & Legal Counseling</span>
-              <p className="letterhead-info">777 Emerald Avenue, Ortigas, Pasig City, Metro Manila · +632-888-7777 · administration@stlaf-law.com</p>
-            </div>
-
-            <h2 className="document-title" style={{ fontFamily: 'Playfair Display' }}>{currentTemplate.subject}</h2>
-
-            <textarea
-              className="document-text-editor"
-              style={{ fontFamily: 'Playfair Display' }}
-              value={compiledText}
-              onChange={(e) => setEditableTemplateText(e.target.value)}
-              placeholder="Edit your document here..."
+          <label className="relative block w-full md:w-[340px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search templates..."
+              className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#c9a961] focus:ring-2 focus:ring-[#d9a74a]/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             />
+          </label>
+        </div>
 
-            {/* Signature Area */}
-            <div className="sign-area">
-              <div className="sign-flex">
-                <div className="sign-col">
-                  <div className="sign-line"></div>
-                  <span className="sign-label">STLAF REPRESENTATIVE</span>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredTemplates.map((template) => (
+            <article
+              key={template.id}
+              className="group rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#d9a74a] hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-900"
+            >
+              <h2 className="mb-1 font-serif text-lg font-semibold text-[#1a2849] dark:text-[#f3e3bd]">{template.title}</h2>
+              <p className="mb-3 min-h-12 text-sm text-slate-600 dark:text-slate-300">{template.description}</p>
+              <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Last updated: {formatDateLabel(getTemplateUpdatedAt(template))}</p>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreviewTemplateId(template.id)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  <Eye size={14} /> Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openEditor(template.id)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1a2849] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#243358]"
+                >
+                  <Edit3 size={14} /> Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExport(template)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#c9a961] px-3 py-2 text-xs font-semibold text-[#1a2536] transition hover:bg-[#d9a74a]"
+                >
+                  <FileDown size={14} /> PDF
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {filteredTemplates.length === 0 && (
+          <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500 dark:border-slate-600 dark:text-slate-300">
+            No templates found for “{searchTerm}”.
+          </div>
+        )}
+      </section>
+
+      {previewTemplate && (
+        <div className="fixed inset-0 z-40 bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="mx-auto flex h-full w-full max-w-6xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#111c36]">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+              <h3 className="font-serif text-xl font-semibold text-[#1a2849] dark:text-[#f3e3bd]">{previewTemplate.title}</h3>
+              <button
+                type="button"
+                onClick={() => setPreviewTemplateId(null)}
+                className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                aria-label="Close preview"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+              <article
+                className="mx-auto h-full max-w-4xl rounded-xl border border-slate-200 bg-slate-50 p-8 text-sm leading-7 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(getTemplateContent(previewTemplate)) }}
+              />
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-5 py-4 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => handleExport(previewTemplate)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <FileDown size={14} /> Export PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => openEditor(previewTemplate.id)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#1a2849] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#243358]"
+              >
+                <Edit3 size={14} /> Edit Template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEditorOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 p-2 sm:p-4">
+          <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#111c36]">
+            <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-700 dark:bg-[#111c36]/95">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mr-2 font-serif text-sm font-semibold text-[#1a2849] dark:text-[#f3e3bd]">Editing: {activeTemplate.title}</span>
+
+                <button type="button" onClick={() => runEditorCommand('bold')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Bold"><Bold size={15} /></button>
+                <button type="button" onClick={() => runEditorCommand('italic')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Italic"><Italic size={15} /></button>
+                <button type="button" onClick={() => runEditorCommand('underline')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Underline"><Underline size={15} /></button>
+
+                <div className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 dark:border-slate-600 dark:bg-slate-900">
+                  <Type size={14} className="text-slate-500 dark:text-slate-300" />
+                  <select
+                    value={fontSize}
+                    onChange={(event) => handleFontSizeChange(event.target.value)}
+                    className="bg-transparent text-xs outline-none"
+                    aria-label="Font size"
+                  >
+                    {FONT_SIZE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="sign-col">
-                  <div className="sign-line"></div>
-                  <span className="sign-label">{candidateName.toUpperCase()}</span>
+
+                <button type="button" onClick={() => runEditorCommand('justifyLeft')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Align left"><AlignLeft size={15} /></button>
+                <button type="button" onClick={() => runEditorCommand('justifyCenter')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Align center"><AlignCenter size={15} /></button>
+                <button type="button" onClick={() => runEditorCommand('justifyRight')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Align right"><AlignRight size={15} /></button>
+
+                <button type="button" onClick={() => runEditorCommand('insertUnorderedList')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Unordered list"><List size={15} /></button>
+                <button type="button" onClick={() => runEditorCommand('insertOrderedList')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Ordered list"><ListOrdered size={15} /></button>
+                <button type="button" onClick={() => runEditorCommand('undo')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Undo"><Undo2 size={15} /></button>
+                <button type="button" onClick={() => runEditorCommand('redo')} className="rounded-md border border-slate-300 p-2 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" aria-label="Redo"><Redo2 size={15} /></button>
+
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                  {lastAutoSavedAt && (
+                    <span className="text-xs text-slate-500 dark:text-slate-300">Auto-saved {formatDateLabel(lastAutoSavedAt)}</span>
+                  )}
+                  <button type="button" onClick={handleManualSave} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800">Save</button>
+                  <button type="button" onClick={() => handleExport(activeTemplate)} className="rounded-lg bg-[#c9a961] px-3 py-2 text-xs font-semibold text-[#1a2536] transition hover:bg-[#d9a74a]">Export PDF</button>
+                  <button type="button" onClick={() => setIsEditorOpen(false)} className="rounded-lg bg-[#1a2849] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#243358]">Close</button>
                 </div>
               </div>
             </div>
 
-            <div className="document-footer">
-              <span>ST. LAWRENCE LAW OFFICES © 2026</span>
-              <span>CONFIDENTIAL DESTRUCT CODE 09-AF</span>
+            <div className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-2">
+              <section className="min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                <div className="border-b border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-300">Editor</div>
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={(event) => setEditorHtml(sanitizeTemplateHtml((event.currentTarget as HTMLDivElement).innerHTML))}
+                  className="h-full min-h-[340px] overflow-y-auto p-5 text-sm leading-7 text-slate-700 outline-none dark:text-slate-100"
+                />
+              </section>
+
+              <section className="min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
+                <div className="border-b border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-300">Live Preview</div>
+                <article
+                  className="h-full min-h-[340px] overflow-y-auto p-5 text-sm leading-7 text-slate-700 dark:text-slate-100"
+                  dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(editorHtml) }}
+                />
+              </section>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {toastMessage && (
+        <div className="fixed right-4 top-4 z-[60] flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 shadow-lg dark:border-emerald-900/60 dark:bg-emerald-950/80 dark:text-emerald-200">
+          <CheckCircle2 size={16} />
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
