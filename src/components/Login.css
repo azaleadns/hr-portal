@@ -1,0 +1,327 @@
+/* Glassmorphic Login Page Styling */
+
+/* Main Full-Screen Backdrop */
+.login-container {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  /* Deep Navy Blue Gradient Background */
+  background: linear-gradient(315deg, #e4c778 0%, #123765 70%, #9E9E9E 100%);
+  padding: 1.5rem;
+  z-index: 1;
+}
+
+/* Floating Abstract Orbs for Depth and Standout Glass Effect */
+.bg-glow-orb-1 {
+  position: absolute;
+  top: 15%;
+  left: 10%;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  /* Soft Gold Glow */
+  background: radial-gradient(circle, rgba(201, 169, 97, 0.15) 0%, rgba(201, 169, 97, 0) 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  animation: floatOrb1 25s ease-in-out infinite alternate;
+  z-index: 2;
+}
+
+.bg-glow-orb-2 {
+  position: absolute;
+  bottom: 10%;
+  right: 15%;
+  width: 550px;
+  height: 550px;
+  border-radius: 50%;
+  /* Soft Navy Blue/Teal Glow */
+  background: radial-gradient(circle, rgba(36, 51, 88, 0.5) 0%, rgba(17, 28, 54, 0) 70%);
+  filter: blur(50px);
+  pointer-events: none;
+  animation: floatOrb2 30s ease-in-out infinite alternate-reverse;
+  z-index: 2;
+}
+
+.bg-glow-orb-3 {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  /* Central soft Navy glow */
+  background: radial-gradient(circle, rgba(201, 169, 97, 0.08) 0%, rgba(17, 28, 54, 0) 80%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Subtle Geometric Accent Line behind the Glass Card */
+.bg-line-accent {
+  position: absolute;
+  width: 140%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(201, 169, 97, 0) 0%, rgba(201, 169, 97, 0.15) 50%, rgba(201, 169, 97, 0) 100%);
+  transform: rotate(-15deg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Animations for Glowing Orbs */
+@keyframes floatOrb1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(60px, 40px) scale(1.1);
+  }
+}
+
+@keyframes floatOrb2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-80px, -60px) scale(1.05);
+  }
+}
+
+/* Premium Glassmorphic Card Overlay */
+.glass-login-card {
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  z-index: 10;
+  /* Semi-transparent dark navy tint */
+  background: rgba(17, 28, 54, 0.45);
+  /* Strong blur to blend and soften background colors */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  /* Thin subtle Gold border for premium metallic effect */
+  border: 1px solid rgba(201, 169, 97, 0.22);
+  /* Smooth rounded edges */
+  border-radius: 18px;
+  box-shadow: 
+    0 10px 40px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 0 15px rgba(201, 169, 97, 0.05);
+  padding: 2.75rem 2.25rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+}
+
+@media (max-width: 480px) {
+  .glass-login-card {
+    padding: 2.25rem 1.5rem;
+    border-radius: 14px;
+    margin: 0.5rem;
+  }
+}
+
+.glass-login-card:hover {
+  border-color: rgba(201, 169, 97, 0.35);
+  box-shadow: 
+    0 15px 50px -5px rgba(0, 0, 0, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15),
+    0 0 25px rgba(201, 169, 97, 0.08);
+}
+
+/* Glass-style Icon Container */
+.logo-icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(201, 169, 97, 0.1);
+  border: 1px solid rgba(201, 169, 97, 0.25);
+  margin-bottom: 1.25rem;
+  color: #c9a961;
+}
+
+/* Input Fields Glass Design */
+.glass-input-wrapper {
+  position: relative;
+  margin-bottom: 1.5rem;
+  margin-top: 10px;
+}
+
+.glass-input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(201, 169, 97, 0.6);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.glass-input {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.75rem;
+  background: rgba(10, 17, 34, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.glass-input::placeholder {
+  color: rgba(139, 149, 165, 0.6);
+}
+
+/* Clean Gold Focus Ring/Accent & Slight Lift */
+.glass-input:focus {
+  border-color: rgba(201, 169, 97, 0.7);
+  background: rgba(10, 17, 34, 0.6);
+  box-shadow: 0 0 12px rgba(201, 169, 97, 0.15);
+}
+
+.glass-input:focus + .glass-input-icon,
+.glass-input-wrapper:focus-within .glass-input-icon {
+  color: #c9a961;
+}
+
+/* Password Toggle Visibility Button */
+.password-toggle-btn {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(139, 149, 165, 0.6);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.password-toggle-btn:hover {
+  color: #c9a961;
+}
+
+/* Golden Button Style with Navy Blue text */
+.btn-gold-submit {
+  width: 100%;
+  padding: 0.9rem;
+  background: #c9a961;
+  color: #111c36;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: 1px solid #c9a961;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(201, 169, 97, 0.2);
+}
+
+/* Golden Button Hover & Glow */
+.btn-gold-submit:hover:not(:disabled) {
+  background: #d4b872;
+  border-color: #d4b872;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(201, 169, 97, 0.35),
+    0 0 15px rgba(201, 169, 97, 0.2);
+}
+
+.btn-gold-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-gold-submit:disabled {
+  background: rgba(201, 169, 97, 0.4);
+  border-color: transparent;
+  color: rgba(17, 28, 54, 0.6);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Error Alert Element (with glass background) */
+.glass-error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  backdrop-filter: blur(8px);
+  color: #fca5a5;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  animation: shakeError 0.4s ease-in-out;
+}
+
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Demo Credential Help Card */
+.glass-credentials-drawer {
+  margin-top: 1.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: rgba(139, 149, 165, 0.8);
+}
+
+.credential-item {
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-mono);
+  background: rgba(201, 169, 97, 0.1);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  border: 1px solid rgba(201, 169, 97, 0.15);
+}
+
+/* STLAF Premium Typography Overlapping Styles */
+.login-brand-name {
+  font-family: Georgia, Garamond, "Times New Roman", serif;
+  font-size: 65px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-brand-name span {
+  display: inline-block;
+}
+
+.brand-t {
+  position: relative;
+  z-index: 10; /* Outermost, on top of L */
+}
+
+.brand-l {
+  position: relative;
+  z-index: 0; /* L is underneath T */
+  margin-left: -0.37em; /* Pull it underneath to make them overlap nicely */
+}
+
+.gold-text {
+  color: #c9a961;
+}
+
