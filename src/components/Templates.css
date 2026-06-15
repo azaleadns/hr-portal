@@ -562,7 +562,8 @@
 }
 
 /* New styles for select inputs to improve spacing */
-.size-select-input, .color-select-input {
+.size-select-input,
+.color-select-input {
   min-width: 80px;
   padding-right: 4px;
   padding-left: 4px;
@@ -637,6 +638,7 @@
   align-items: center;
   text-align: center;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .crest-logo-symbol {
@@ -683,6 +685,7 @@
   padding-left: -0.5px;
   padding-right: 24px;
   max-width: 100%;
+  flex-shrink: 0;
 }
 
 .logo-section {
@@ -762,6 +765,7 @@
   margin: 14px 0 24px 0;
   letter-spacing: 0.5px;
   line-height: 1.4;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -773,6 +777,8 @@
   display: flex;
   flex-direction: column;
   font-family: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
+  min-height: 0;
+  overflow: visible;
 }
 
 /* Transparent Autoexpanding Text Area & contentEditable Editor */
@@ -786,8 +792,10 @@
   text-align: justify;
   font-family: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
   white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   padding: 0;
-  min-height: 550px;
+  margin: 0;
   cursor: text;
 }
 
@@ -809,6 +817,7 @@
   font-family: inherit !important;
   display: inline-block !important;
   margin: 0 2px !important;
+  white-space: nowrap;
 }
 
 /* Condition tokens styled with a purple dashed outline */
@@ -822,6 +831,7 @@
   font-family: inherit !important;
   display: inline-block !important;
   margin: 0 2px !important;
+  white-space: nowrap;
 }
 
 /* Make sure in preview mode, no red or purple dashed lines show up */
@@ -892,12 +902,16 @@
   color: #0f172a;
   text-align: justify;
   padding: 0;
-  min-height: 550px;
+  margin: 0;
+  overflow: visible;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* SIGNATURE PANELS MODULE */
 .parchment-sign-panel-block {
   margin-top: 42px;
+  flex-shrink: 0;
   page-break-inside: avoid;
 }
 
@@ -998,26 +1012,26 @@
     width: 100% !important;
   }
 
-  /* Force physical printed document page layout details */
+  /* Physical Paper design */
   .paper-sheet {
-    display: block !important;
-    /* Binago mula flex patungong block para sa mas reliable na page breaks */
-    box-shadow: none !important;
-    border: none !important;
-    background: #ffffff !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: auto !important;
-    overflow: visible !important;
+    position: relative;
+    background-color: #ffffff;
+    /* Cotton ivory high grade letterhead paper */
+    width: 100%;
+    max-width: 800px;
+    min-height: auto;
+    padding: 75px 85px;
+    border: 1px solid #ffffff;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   /* Allow text to break lines nicely on printed papers */
   .compiled-preview-paper,
   .document-drafting-textarea {
     color: #000000 !important;
-    /* Inayos ang dating invalid color code */
     background: transparent !important;
     height: auto !important;
     line-height: 1.85 !important;
@@ -1054,8 +1068,8 @@
 
   /* Force high contrast and preserve margins */
   @page {
-    size: letter;
-    margin: 1.2in;
+    size: legal;
+    margin: 1in;
     /* Professional legal print margins */
   }
 }

@@ -309,7 +309,11 @@ export default function Templates() {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save('template.pdf');
+    // Use the template name or subject as the PDF filename, sanitized
+    const safeName = (currentTemplate.name || currentTemplate.subject || 'template')
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase();
+    pdf.save(`${safeName}.pdf`);
   };
 
   // Reset current template state
@@ -778,25 +782,6 @@ export default function Templates() {
                   />
                 </div>
               )}
-            </div>
-
-            {/* Signature Block Section */}
-            <div className="parchment-sign-panel-block">
-              <div className="sign-panel-grid">
-
-                <div className="signing-column">
-                  <div className="signing-canvas-line"></div>
-                  <span className="signing-signee-title">SADSAD TAMESIS LEGAL & ACCOUNTANCY FIRM</span>
-                  <span className="signing-signee-subtitle">By: {supervisingOfficer || 'Managing Partner'}</span>
-                </div>
-
-                <div className="signing-column">
-                  <div className="signing-canvas-line"></div>
-                  <span className="signing-signee-title">{candidateName ? candidateName.toUpperCase() : 'EMPLOYEE SIGNATURE'}</span>
-                  <span className="signing-signee-subtitle">Affiant / Authorized Designee</span>
-                </div>
-
-              </div>
             </div>
           </div>
         </div>
