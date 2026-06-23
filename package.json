@@ -17,6 +17,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "chart.js": "^4.5.1",
+    "docx-preview": "^0.3.7",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "html2pdf.js": "^0.14.0",

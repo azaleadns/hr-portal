@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import mammoth from 'mammoth';
@@ -28,7 +28,8 @@ import {
   Undo2,
   Palette,
   Highlighter,
-  Indent
+  Indent,
+  Loader2
 } from 'lucide-react';
 import './Templates.css';
 
@@ -90,6 +91,112 @@ const VARIABLE_REGISTRY = [
   { token: '{DepartmentName}', display: 'Assigned Department' }
 ];
 
+// US Legal Standard dimensions at 96 DPI
+const PAPER_WIDTH = 816;
+const PAPER_HEIGHT = 1248;
+const PAPER_PADDING = 72;
+const BOTTOM_MARGIN_BUFFER = 72;
+
+const HEADER_HEIGHT = 110;
+
+const CONTENT_HEIGHT_FIRST_PAGE = PAPER_HEIGHT - (PAPER_PADDING * 2) - HEADER_HEIGHT - BOTTOM_MARGIN_BUFFER;
+const CONTENT_HEIGHT_SUBSEQUENT = PAPER_HEIGHT - (PAPER_PADDING * 2) - BOTTOM_MARGIN_BUFFER;
+
+function paginateHtml(html: string, headerOnFirstOnly: boolean = true): string[] {
+  const measurer = document.createElement('div');
+  measurer.className = 'pagination-measurer compiled-preview-paper-scoping';
+  measurer.style.position = 'absolute';
+  measurer.style.left = '-9999px';
+  measurer.style.top = '-9999px';
+  measurer.style.visibility = 'hidden';
+  measurer.style.width = `${PAPER_WIDTH - PAPER_PADDING * 2}px`;
+  measurer.innerHTML = html;
+  document.body.appendChild(measurer);
+
+  const pages: string[] = [];
+  let currentPageHtml = '';
+  let currentMaxHeight = headerOnFirstOnly ? CONTENT_HEIGHT_FIRST_PAGE : CONTENT_HEIGHT_SUBSEQUENT;
+
+  const children = Array.from(measurer.children) as HTMLElement[];
+
+  if (children.length === 0) {
+    document.body.removeChild(measurer);
+    return [html];
+  }
+
+  const singleMeasurer = document.createElement('div');
+  singleMeasurer.className = 'pagination-measurer compiled-preview-paper-scoping';
+  singleMeasurer.style.position = 'absolute';
+  singleMeasurer.style.left = '-9999px';
+  singleMeasurer.style.top = '-9999px';
+  singleMeasurer.style.visibility = 'hidden';
+  singleMeasurer.style.width = `${PAPER_WIDTH - PAPER_PADDING * 2}px`;
+  document.body.appendChild(singleMeasurer);
+
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+
+    if (child.tagName === 'TABLE') {
+      const rows = Array.from(child.querySelectorAll('tr')) as HTMLTableRowElement[];
+      let tableAttributes = '';
+      for (let attr of Array.from(child.attributes)) {
+        tableAttributes += ` ${attr.name}="${attr.value}"`;
+      }
+
+      let currentTableRowsHtml = '';
+
+      for (let j = 0; j < rows.length; j++) {
+        const rowHtml = rows[j].outerHTML;
+        const testTableHtml = `<table${tableAttributes}><tbody>${currentTableRowsHtml + rowHtml}</tbody></table>`;
+
+        singleMeasurer.innerHTML = currentPageHtml + testTableHtml;
+        const totalH = singleMeasurer.scrollHeight;
+
+        if (totalH > currentMaxHeight) {
+          if (currentTableRowsHtml === '' && currentPageHtml === '') {
+            currentTableRowsHtml += rowHtml;
+          } else {
+            if (currentTableRowsHtml !== '') {
+              currentPageHtml += `<table${tableAttributes}><tbody>${currentTableRowsHtml}</tbody></table>`;
+            }
+            pages.push(currentPageHtml);
+
+            currentMaxHeight = CONTENT_HEIGHT_SUBSEQUENT;
+            currentPageHtml = '';
+            currentTableRowsHtml = rowHtml;
+          }
+        } else {
+          currentTableRowsHtml += rowHtml;
+        }
+      }
+
+      if (currentTableRowsHtml !== '') {
+        currentPageHtml += `<table${tableAttributes}><tbody>${currentTableRowsHtml}</tbody></table>`;
+      }
+    } else {
+      singleMeasurer.innerHTML = currentPageHtml + child.outerHTML;
+      const totalH = singleMeasurer.scrollHeight;
+
+      if (totalH > currentMaxHeight && currentPageHtml !== '') {
+        pages.push(currentPageHtml);
+        currentMaxHeight = CONTENT_HEIGHT_SUBSEQUENT;
+        currentPageHtml = child.outerHTML;
+      } else {
+        currentPageHtml += child.outerHTML;
+      }
+    }
+  }
+
+  if (currentPageHtml) {
+    pages.push(currentPageHtml);
+  }
+
+  document.body.removeChild(measurer);
+  document.body.removeChild(singleMeasurer);
+
+  return pages.length > 0 ? pages : [html];
+}
+
 export default function Templates() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DOCX_TEMPLATES[0].id);
   const [showSidebar, setShowSidebar] = useState(true);
@@ -99,6 +206,7 @@ export default function Templates() {
 
   const [docxRawHtml, setDocxRawHtml] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   const [currentFont, setCurrentFont] = useState<string>("Source Serif Pro");
   const [currentSize, setCurrentSize] = useState<string>("12");
@@ -108,18 +216,18 @@ export default function Templates() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  const [paginatedPages, setPaginatedPages] = useState<string[]>([]);
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fontColorRef = useRef<HTMLInputElement>(null);
   const highlightColorRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
-  const isTypingRef = useRef<boolean>(false);
-
   const currentTemplate = useMemo(() => {
     return DOCX_TEMPLATES.find(t => t.id === selectedTemplateId) || DOCX_TEMPLATES[0];
   }, [selectedTemplateId]);
 
+  // Load Template Layout
   useEffect(() => {
     async function loadDocxTemplate() {
       if (!currentTemplate) return;
@@ -132,30 +240,29 @@ export default function Templates() {
       setIsLoading(true);
       try {
         const response = await fetch(`/templates/${currentTemplate.fileName}`);
+        if (!response.ok) throw new Error('Template not found');
         const arrayBuffer = await response.arrayBuffer();
 
         const options = {
           preserveEmptyParagraphs: true,
+          includeDefaultStyleMap: true,
+          convertUnderline: true,
           styleMap: [
-            "p[style-name='Heading 1'] => h1:carousels",
-            "p[style-name='Heading 2'] => h2",
-            "p[style-name='Heading 3'] => h3",
-            "table => table.docx-rendered-table:fresh",
-            "tr => tr",
-            "td => td",
-            "p[style-name='List Bullet'] => ul > li:fresh",
-            "p[style-name='List Number'] => ol > li:fresh",
-            "p[style-name='List Number 2'] => ol[style='list-style-type: lower-roman;'] > li:fresh",
-            "p[style-name='List Number 3'] => ol[style='list-style-type: upper-roman;'] > li:fresh"
-          ],
-          convertUnderline: true
+            "p[style-name='Header'] => h2:fresh",
+            "p[style-name='Heading 1'] => h1:fresh",
+            "p[style-name='Heading 2'] => h2:fresh",
+            "table => table.docx-rendered-table:fresh"
+          ]
         };
 
-        const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, options);
+        const result = await mammoth.convertToHtml(
+          { arrayBuffer: arrayBuffer },
+          options
+        );
         let processedHtml = result.value;
 
-        processedHtml = processedHtml.replace(/<ol>/g, '<ol class="list-decimal pl-8 my-2">');
-        processedHtml = processedHtml.replace(/<ul>/g, '<ul class="list-disc pl-8 my-2">');
+        processedHtml = processedHtml.replace(/<ol>/g, '<ol class="list-decimal pl-6 my-1">');
+        processedHtml = processedHtml.replace(/<ul>/g, '<ul class="list-disc pl-6 my-1">');
 
         processedHtml = processedHtml.replace(/\{([a-zA-Z0-9_]+)\}/g, (match) => {
           return `<span class="live-token" contenteditable="false">${match}</span>`;
@@ -163,8 +270,8 @@ export default function Templates() {
 
         setDocxRawHtml(processedHtml);
       } catch (error) {
-        console.error("Critical error reading corporate template payload:", error);
-        setDocxRawHtml("<p style='color:red; text-align:center; padding: 20px;'>Template element missing inside public binary matrix.</p>");
+        console.error("Error loading template:", error);
+        setDocxRawHtml(`<p>No template file found at /templates/${currentTemplate.fileName}</p>`);
       } finally {
         setIsLoading(false);
       }
@@ -173,49 +280,25 @@ export default function Templates() {
     loadDocxTemplate();
   }, [selectedTemplateId, currentTemplate]);
 
+  // Unified calculations trigger
   useEffect(() => {
-    if (docxRawHtml && !isPreview) {
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = docxRawHtml;
-      const paragraphs = tempDiv.querySelectorAll('p');
-      paragraphs.forEach(p => {
-        const style = p.getAttribute('style');
-        if (style && style.includes('text-indent')) {
-          const indentMatch = style.match(/text-indent:\s*([0-9]+)px/);
-          if (indentMatch) {
-            p.classList.add('first-line-indent');
-            p.removeAttribute('style');
-          }
-        }
-      });
-      setDocxRawHtml(tempDiv.innerHTML);
+    if (docxRawHtml) {
+      const resultPages = paginateHtml(docxRawHtml, false);
+      setPaginatedPages(resultPages);
+    } else {
+      setPaginatedPages([]);
     }
-  }, [docxRawHtml, isPreview]);
+  }, [docxRawHtml]);
 
-  useEffect(() => {
-    if (editorRef.current && !isPreview && !isLoading) {
-      if (!isTypingRef.current && document.activeElement !== editorRef.current) {
-        editorRef.current.innerHTML = docxRawHtml;
-      }
-    }
-  }, [docxRawHtml, isPreview, isLoading]);
-
-  const handleEditorInput = () => {
-    if (editorRef.current) {
-      isTypingRef.current = true;
-      const newHtml = editorRef.current.innerHTML;
-
-      setDocxRawHtml(newHtml);
-      setCustomDrafts(prev => {
-        const updated = { ...prev, [selectedTemplateId]: newHtml };
-        localStorage.setItem('stlaf_automated_vault', JSON.stringify(updated));
-        return updated;
-      });
-
-      setTimeout(() => {
-        isTypingRef.current = false;
-      }, 50);
-    }
+  const handleEditorInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const newHtml = target.innerHTML;
+    setDocxRawHtml(newHtml);
+    setCustomDrafts(prev => {
+      const updated = { ...prev, [selectedTemplateId]: newHtml };
+      localStorage.setItem('stlaf_automated_vault', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const saveSelection = () => {
@@ -229,7 +312,6 @@ export default function Templates() {
   };
 
   const restoreSelection = () => {
-    if (editorRef.current) editorRef.current.focus();
     const selection = window.getSelection();
     if (savedRangeRef.current && selection) {
       selection.removeAllRanges();
@@ -239,42 +321,108 @@ export default function Templates() {
     return selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
   };
 
+  const convertImagesToBase64 = async (container: HTMLElement) => {
+    const images = container.querySelectorAll('img');
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      if (img.src.startsWith('data:')) continue;
+      try {
+        const res = await fetch(img.src);
+        const blob = await res.blob();
+        await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            img.src = reader.result as string;
+            resolve(true);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.warn("Could not inline local image resource safely:", img.src);
+      }
+    }
+  };
+
   const handleExportPdf = async () => {
-    const stage = document.querySelector('.parchment-desk-stage') as HTMLElement;
-    if (!stage) return;
-    const paperSheets = stage.querySelectorAll('.paper-sheet') as NodeListOf<HTMLElement>;
-    if (paperSheets.length === 0) return;
-    setIsLoading(true);
-
+    setIsExporting(true);
     try {
-      const pdf = new jsPDF('p', 'pt', 'letter');
+      const pdfContainer = document.createElement('div');
+      pdfContainer.className = 'pdf-export-container';
+      document.body.appendChild(pdfContainer);
+
+      for (let index = 0; index < paginatedPages.length; index++) {
+        const pageHtml = paginatedPages[index];
+        const sheet = document.createElement('div');
+        sheet.className = 'paper-sheet paginated-sheet';
+
+        // UPDATE: Kung MKST ang pinili, i-inject ang METROKST logo/header layout sa PDF download
+        if (selectedTemplateId === 'Exit Interview - MKST') {
+          sheet.innerHTML = `
+            <div class="mkst-header-container" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; width: 100%;">
+              <img src="/MKST.png" alt="METROKST Logo" style="height: 75px; object-fit: contain;" />
+            </div>
+          `;
+        } else {
+          sheet.innerHTML = `
+            <div class="stlaf-header-container">
+              <div class="logo-section">
+                <img src="/MAIN.png" alt="STLAF Logo" class="logo-image" />
+              </div>
+              <div class="contact-section">
+                <p class="contact-item" style="font-family: 'Source Serif 4', Georgia, serif">7F, Victoria Sports Tower,<br/>EDSA, South Triangle, Quezon City</p>
+                <p class="contact-item" style="font-family: 'Source Serif 4', Georgia, serif">legal@sadsadtamesislaw.com</p>
+                <p class="contact-item" style="font-family: 'Source Serif 4', Georgia, serif">(02) 8463-4941 / 0948-961-2397</p>
+              </div>
+            </div>
+          `;
+        }
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'compiled-preview-paper text-justify';
+        contentDiv.style.marginTop = selectedTemplateId === 'Exit Interview - MKST' ? '0px' : '16px';
+        contentDiv.innerHTML = pageHtml;
+        sheet.appendChild(contentDiv);
+
+        pdfContainer.appendChild(sheet);
+      }
+
+      await convertImagesToBase64(pdfContainer);
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: [816, 1248]
+      });
+
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const sheets = pdfContainer.querySelectorAll('.paper-sheet') as NodeListOf<HTMLElement>;
 
-      for (let i = 0; i < paperSheets.length; i++) {
-        const sheet = paperSheets[i];
-        const originalBg = sheet.style.backgroundImage;
-        sheet.style.backgroundImage = 'none';
-
+      for (let i = 0; i < sheets.length; i++) {
+        const sheet = sheets[i];
         const canvas = await html2canvas(sheet, {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          width: PAPER_WIDTH,
+          height: PAPER_HEIGHT,
         });
 
-        sheet.style.backgroundImage = originalBg;
-
-        const imgData = canvas.toDataURL('image/png');
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
+        const imgData = canvas.toDataURL('image/png', 1.0);
         if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       }
-      pdf.save(`${currentTemplate.id}_STLAF_Form.pdf`);
+
+      pdf.save(`${currentTemplate.id.replace(/\s+/g, '_')}_STLAF_Form.pdf`);
+      document.body.removeChild(pdfContainer);
     } catch (err) {
-      console.error(err);
+      console.error('PDF Export Error:', err);
+      alert('Error exporting PDF layout.');
     } finally {
-      setIsLoading(false);
+      setIsExporting(false);
     }
   };
 
@@ -282,13 +430,17 @@ export default function Templates() {
     restoreSelection();
     const tokenHtml = `<span class="live-token" contenteditable="false">${token}</span>`;
     document.execCommand('insertHTML', false, tokenHtml);
-    handleEditorInput();
+    if (editorRef.current) {
+      setDocxRawHtml(editorRef.current.innerHTML);
+    }
   };
 
   const applyStyle = (cmd: string, arg?: string) => {
     restoreSelection();
     document.execCommand(cmd, false, arg);
-    handleEditorInput();
+    if (editorRef.current) {
+      setDocxRawHtml(editorRef.current.innerHTML);
+    }
   };
 
   const applyCustomFontSize = (sizeInPt: string) => {
@@ -296,94 +448,18 @@ export default function Templates() {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
-
-      if (range.toString().length === 0) {
-        document.execCommand('fontSize', false, '3');
-        handleEditorInput();
-        return;
-      }
-
-      const span = document.createElement('span');
-      const sizeInPx = Math.round(parseFloat(sizeInPt) * 1.333);
-      span.style.fontSize = `${sizeInPx}px`;
-
-      try {
-        range.surroundContents(span);
-      } catch (e) {
-        document.execCommand('insertHTML', false, `<span style="font-size: ${sizeInPx}px;">${range.toString()}</span>`);
-      }
-      handleEditorInput();
+      if (range.toString().length === 0) return;
+      document.execCommand('insertHTML', false, `<span style="font-size: ${sizeInPt}pt;">${range.toString()}</span>`);
+      if (editorRef.current) setDocxRawHtml(editorRef.current.innerHTML);
     }
   };
 
   const handleFormat = (cmd: string) => {
     restoreSelection();
-    if (cmd === 'indent') {
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const walker = document.createTreeWalker(
-          range.commonAncestorContainer,
-          NodeFilter.SHOW_ELEMENT,
-          {
-            acceptNode: (n) => {
-              const el = n as HTMLElement;
-              return el.tagName === 'P' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
-            },
-          }
-        );
-        let node = walker.currentNode as HTMLElement;
-        while (node) {
-          const pRange = document.createRange();
-          pRange.selectNodeContents(node);
-          if (
-            range.compareBoundaryPoints(Range.END_TO_START, pRange) < 0 &&
-            range.compareBoundaryPoints(Range.START_TO_END, pRange) > 0
-          ) {
-            node.classList.toggle('first-line-indent');
-          }
-          node = walker.nextNode() as HTMLElement;
-        }
-      }
-      handleEditorInput();
-      return;
+    if (cmd === 'indent' && editorRef.current) {
+      document.execCommand('indent');
+      setDocxRawHtml(editorRef.current.innerHTML);
     }
-    if (cmd === 'outdent') {
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const walker = document.createTreeWalker(
-          range.commonAncestorContainer,
-          NodeFilter.SHOW_ELEMENT,
-          {
-            acceptNode: (n) => {
-              const el = n as HTMLElement;
-              return el.tagName === 'P' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
-            },
-          }
-        );
-        let node = walker.currentNode as HTMLElement;
-        while (node) {
-          const pRange = document.createRange();
-          pRange.selectNodeContents(node);
-          if (
-            range.compareBoundaryPoints(Range.END_TO_START, pRange) < 0 &&
-            range.compareBoundaryPoints(Range.START_TO_END, pRange) > 0
-          ) {
-            node.classList.remove('first-line-indent');
-          }
-          node = walker.nextNode() as HTMLElement;
-        }
-      }
-      handleEditorInput();
-    }
-  };
-
-  const handleRomanNumberingInsertion = () => {
-    restoreSelection();
-    const romanListHtml = `<ol style="list-style-type: lower-roman;"><li>New roman segment item...</li></ol>`;
-    document.execCommand('insertHTML', false, romanListHtml);
-    handleEditorInput();
   };
 
   const handleImageInsertion = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -394,7 +470,7 @@ export default function Templates() {
         restoreSelection();
         const imgHtml = `<img src="${event.target?.result}" class="editor-inserted-image docx-signature-block" />`;
         document.execCommand('insertHTML', false, imgHtml);
-        handleEditorInput();
+        if (editorRef.current) setDocxRawHtml(editorRef.current.innerHTML);
       };
       reader.readAsDataURL(file);
     }
@@ -402,17 +478,9 @@ export default function Templates() {
 
   const handleTableInsertion = () => {
     restoreSelection();
-    let tableHtml = `<table class="editor-custom-table docx-rendered-table">`;
-    for (let i = 0; i < 3; i++) {
-      tableHtml += `<tr>`;
-      for (let j = 0; j < 3; j++) {
-        tableHtml += i === 0 ? `<th>Header ${j + 1}</th>` : `<td>Cell data...</td>`;
-      }
-      tableHtml += `</tr>`;
-    }
-    tableHtml += `</table>`;
+    let tableHtml = `<table class="docx-rendered-table"><tr><th>Header 1</th><th>Header 2</th><th>Header 3</th></tr><tr><td>Data 1</td><td>Data 2</td><td>Data 3</td></tr></table>`;
     document.execCommand('insertHTML', false, tableHtml);
-    handleEditorInput();
+    if (editorRef.current) setDocxRawHtml(editorRef.current.innerHTML);
   };
 
   const filteredTemplates = useMemo(() => {
@@ -421,42 +489,36 @@ export default function Templates() {
     ).sort((a, b) => a.name.localeCompare(b.name));
   }, [searchTerm]);
 
-  // NATIVE LAYOUT BREAK GENERATION matrix
-  const paginatedHtmlPages = useMemo(() => {
-    if (!docxRawHtml) return [];
-    if (!isPreview) return [docxRawHtml];
-
-    // Split safely inside parent context using direct paragraph/table parsing strategy
-    const div = document.createElement('div');
-    div.innerHTML = docxRawHtml;
-
-    const elements = Array.from(div.children);
-    const pages: string[] = [];
-    let currentChunk = "";
-    let estimatedLength = 0;
-
-    elements.forEach((el) => {
-      const elHtml = el.outerHTML;
-      // Isang page ay kayang mag-hold ng bandang ~2100 characters kasama ang formatting wrapper
-      if (estimatedLength + elHtml.length > 2100 && currentChunk !== "") {
-        pages.push(currentChunk);
-        currentChunk = elHtml;
-        estimatedLength = elHtml.length;
-      } else {
-        currentChunk += elHtml;
-        estimatedLength += elHtml.length;
-      }
-    });
-
-    if (currentChunk) {
-      pages.push(currentChunk);
-    }
-
-    return pages.length > 0 ? pages : [docxRawHtml];
-  }, [docxRawHtml, isPreview]);
+  const renderHeader = () => (
+    <div className="stlaf-header-container">
+      <div className="logo-section">
+        <img src="/MAIN.png" alt="STLAF Logo" className="logo-image" />
+      </div>
+      <div className="contact-section">
+        <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>
+          7F, Victoria Sports Tower,<br />EDSA, South Triangle, Quezon City
+        </p>
+        <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>
+          legal@sadsadtamesislaw.com
+        </p>
+        <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>
+          (02) 8463-4941 / 0948-961-2397
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="templates-container">
+      {isExporting && (
+        <div className="export-overlay">
+          <div className="export-modal">
+            <div className="export-spinner"></div>
+            <p style={{ margin: 0, color: '#334155', fontWeight: 600 }}>Generating PDF Layout...</p>
+          </div>
+        </div>
+      )}
+
       <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageInsertion} />
       <input type="color" ref={fontColorRef} style={{ display: 'none' }} onChange={(e) => applyStyle('foreColor', e.target.value)} />
       <input type="color" ref={highlightColorRef} style={{ display: 'none' }} onChange={(e) => applyStyle('hiliteColor', e.target.value)} />
@@ -472,15 +534,25 @@ export default function Templates() {
             <label className="sidebar-group-title">Search Documents</label>
             <div className="search-box-container">
               <Search size={14} className="search-icon-inside" />
-              <input type="text" className="search-sidebar-input" placeholder="Type document keywords..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              <input
+                type="text"
+                className="search-sidebar-input"
+                placeholder="Type document keywords..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
 
-          <div className="sidebar-group">
+          <div className="sidebar-group" style={{ flex: 1, minHeight: 0 }}>
             <label className="sidebar-group-title">Templates Registry ({filteredTemplates.length})</label>
-            <div className="templates-list-scrollable">
+            <div className="templates-list-scrollable" style={{ flex: 1, maxHeight: 'none' }}>
               {filteredTemplates.map(t => (
-                <button key={t.id} className={`template-list-item ${selectedTemplateId === t.id ? 'active' : ''}`} onClick={() => setSelectedTemplateId(t.id)}>
+                <button
+                  key={t.id}
+                  className={`template-list-item ${selectedTemplateId === t.id ? 'active' : ''}`}
+                  onClick={() => setSelectedTemplateId(t.id)}
+                >
                   <FileText size={14} className="file-icon" />
                   <div className="item-txt-meta">
                     <span className="item-title">{t.name}</span>
@@ -494,7 +566,7 @@ export default function Templates() {
       </aside>
 
       <section className="workspace-main">
-        <header className="sticky-action-controls no-print flex flex-col gap-3">
+        <header className="sticky-action-controls no-print">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center">
               {!showSidebar && (
@@ -503,16 +575,26 @@ export default function Templates() {
                 </button>
               )}
               <h1 className="page-title text-xl font-bold text-slate-700">Edit Templates</h1>
+              <span className="mr-3 text-xs text-slate-400 font-medium">
+                {paginatedPages.length} {paginatedPages.length === 1 ? 'page' : 'pages'} verified </span>
             </div>
 
             <div className="flex items-center gap-2">
-              <button className={`icon-control-btn ${isPreview ? 'premium-purple-active' : ''}`} onClick={() => setIsPreview(!isPreview)} disabled={isLoading}>
+              <button
+                className={`icon-control-btn ${isPreview ? 'premium-purple-active' : ''}`}
+                onClick={() => setIsPreview(!isPreview)}
+                disabled={isLoading}
+              >
                 {isPreview ? <Edit3 size={14} /> : <Eye size={14} />}
-                <span>{isPreview ? 'Manual Design Mode' : 'Render Document'}</span>
+                <span>{isPreview ? 'Edit Mode' : 'Preview Mode'}</span>
               </button>
-              <button className="action-pill-btn-gold" onClick={handleExportPdf} disabled={isLoading}>
-                <Printer size={14} />
-                <span>Export PDF Layout</span>
+              <button
+                className="action-pill-btn-gold"
+                onClick={handleExportPdf}
+                disabled={isLoading || isExporting}
+              >
+                {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+                <span>{isExporting ? 'Exporting...' : 'Export PDF Layout'}</span>
               </button>
             </div>
           </div>
@@ -545,9 +627,8 @@ export default function Templates() {
                   className="formatting-toolbar-select size-selector"
                   value={currentSize}
                   onChange={(e) => {
-                    const selectedSize = e.target.value;
-                    setCurrentSize(selectedSize);
-                    applyCustomFontSize(selectedSize);
+                    setCurrentSize(e.target.value);
+                    applyCustomFontSize(e.target.value);
                   }}
                 >
                   {FONT_SIZES.map(size => (
@@ -578,9 +659,7 @@ export default function Templates() {
               <div className="formatting-toolbar-group">
                 <button type="button" title="Unordered List" className="toolbar-icon-btn" onClick={() => applyStyle('insertUnorderedList')}><List size={13} /></button>
                 <button type="button" title="Ordered List" className="toolbar-icon-btn" onClick={() => applyStyle('insertOrderedList')}><ListOrdered size={13} /></button>
-                <button type="button" title="Roman Numbering (i, ii, iii)" className="toolbar-icon-btn font-serif font-bold text-[11px]" onClick={handleRomanNumberingInsertion}>Ⅰ⫿</button>
                 <button type="button" title="Increase Indent" className="toolbar-icon-btn" onClick={() => handleFormat('indent')}><Indent size={13} /></button>
-                <button type="button" title="Decrease Indent" className="toolbar-icon-btn" onClick={() => handleFormat('outdent')}><Indent size={13} className="rotate-180" /></button>
               </div>
 
               <div className="formatting-toolbar-group">
@@ -589,12 +668,18 @@ export default function Templates() {
               </div>
 
               <div className="relative ml-auto">
-                <button type="button" className="toolbar-trigger-btn font-semibold" onClick={() => setShowTagsMenu(!showTagsMenu)}>
+                <button
+                  type="button"
+                  className="toolbar-trigger-btn font-semibold"
+                  onClick={() => setShowTagsMenu(!showTagsMenu)}
+                >
                   <Tag size={12} className="mr-1 text-slate-500" /> Variable Injection <ChevronDown size={11} className="ml-1" />
                 </button>
                 {showTagsMenu && (
                   <div className="absolute top-full right-0 mt-1.5 w-56 bg-white border border-slate-200 shadow-xl rounded-md z-50 py-1 text-left">
-                    <div className="px-3 py-1 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-100">Editable Layout Variables</div>
+                    <div className="px-3 py-1 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-100">
+                      Editable Layout Variables
+                    </div>
                     {VARIABLE_REGISTRY.map(v => (
                       <button
                         key={v.token}
@@ -615,46 +700,54 @@ export default function Templates() {
         <div className="parchment-desk-stage">
           {isLoading ? (
             <div className="paper-sheet flex items-center justify-center">
-              <div className="text-center text-sm text-slate-400 py-24">Converting docx structural layout maps securely...</div>
+              <div className="text-center text-sm text-slate-400 py-24">
+                <Loader2 className="animate-spin mx-auto mb-3" size={32} />
+                Converting document template...
+              </div>
             </div>
-          ) : isPreview ? (
-            paginatedHtmlPages.map((pageHtml, index) => (
-              <div className="paper-sheet preview-mode-sheet" key={index}>
-                {index === 0 && (
-                  <div className="stlaf-header-container">
-                    <div className="logo-section"><img src="/MAIN.png" alt="STLAF Logo" className="logo-image" /></div>
-                    <div className="contact-section">
-                      <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>7F, Victoria Sports Tower,<br />EDSA, South Triangle, Quezon City</p>
-                      <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>legal@sadsadtamesislaw.com</p>
-                      <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>(02) 8463-4941 / 0948-961-2397</p>
-                    </div>
+          ) : (
+            paginatedPages.map((pageHtml, index) => (
+              <div className="paper-sheet paginated-sheet" key={index}>
+
+                {/* UPDATE: Conditional layout injection ng METROKST Header vs STLAF Law Firm Letterhead */}
+                {selectedTemplateId === 'Exit Interview - MKST' ? (
+                  <div className="mkst-header-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px', width: '100%' }}>
+                    <img src="/MKST.png" alt="METROKST Logo" style={{ height: '75px', objectFit: 'contain' }} />
                   </div>
+                ) : (
+                  renderHeader()
                 )}
 
-                <div className="legal-document-editor-container mt-4 text-justify">
-                  <div className="compiled-preview-paper text-sm leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: pageHtml }} />
+                {/* Dynamic spacing setup base sa kung anong structural system header ang naka-display */}
+                <div
+                  className="legal-document-editor-container text-justify"
+                  style={{ marginTop: selectedTemplateId === 'Exit Interview - MKST' ? '0px' : '16px' }}
+                >
+                  {isPreview ? (
+                    <div
+                      className="compiled-preview-paper"
+                      dangerouslySetInnerHTML={{ __html: pageHtml }}
+                    />
+                  ) : (
+                    <div
+                      ref={editorRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      onInput={handleEditorInput}
+                      onBlur={saveSelection}
+                      onMouseUp={saveSelection}
+                      onKeyUp={saveSelection}
+                      className="document-drafting-editor"
+                      dangerouslySetInnerHTML={{ __html: pageHtml }}
+                    />
+                  )}
                 </div>
 
                 <div className="page-number-indicator no-print">
-                  Page {index + 1} of {paginatedHtmlPages.length}
+                  Page {index + 1} of {paginatedPages.length}
                 </div>
               </div>
             ))
-          ) : (
-            <div className="paper-sheet editing-mode-sheet">
-              <div className="stlaf-header-container">
-                <div className="logo-section"><img src="/MAIN.png" alt="STLAF Logo" className="logo-image" /></div>
-                <div className="contact-section">
-                  <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>7F, Victoria Sports Tower,<br />EDSA, South Triangle, Quezon City</p>
-                  <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>legal@sadsadtamesislaw.com</p>
-                  <p className="contact-item" style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}>(02) 8463-4941 / 0948-961-2397</p>
-                </div>
-              </div>
-
-              <div className="legal-document-editor-container mt-4 text-justify">
-                <div id="document-editor" ref={editorRef} contentEditable={true} onInput={handleEditorInput} onBlur={saveSelection} onMouseUp={saveSelection} onKeyUp={saveSelection} className="document-drafting-editor text-sm min-h-[1056px] outline-none" />
-              </div>
-            </div>
           )}
         </div>
       </section>

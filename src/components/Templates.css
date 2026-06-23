@@ -1,11 +1,11 @@
 /* ==========================================================================
    CONFIG & FONTS
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Cinzel:wght=700&family=Montserrat:wght=600&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Cinzel:wght=700&family=Montserrat:wght=600&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&family=Inter:wght@400;500;600;700&display=swap');
 
 .templates-container {
   display: flex;
-  height: calc(100vh - 48px);
+  height: 100vh;
   width: 100%;
   background-color: #f1f5f9;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -14,23 +14,12 @@
   position: relative;
 }
 
-.templates-container.fullscreen-mode-active {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 100vh;
-  width: 100vw;
-  z-index: 2000;
-  border-radius: 0 !important;
-}
-
 /* ==========================================================================
    WORKSPACE LEFT SETTINGS SIDEBAR
    ========================================================================== */
 .workspace-sidebar {
   width: 330px;
+  min-width: 330px;
   background-color: #ffffff;
   border-right: 1px solid #e2e8f0;
   display: flex;
@@ -42,6 +31,7 @@
 
 .workspace-sidebar.collapsed {
   width: 0px;
+  min-width: 0px;
   border-right: none;
 }
 
@@ -71,6 +61,8 @@
   padding: 4px;
   border-radius: 4px;
   transition: all 0.15s ease;
+  background: none;
+  border: none;
 }
 
 .sidebar-close-btn:hover {
@@ -139,7 +131,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -214,6 +206,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  min-width: 0;
 }
 
 .sticky-action-controls {
@@ -223,6 +216,7 @@
   display: flex;
   flex-direction: column;
   z-index: 40;
+  flex-shrink: 0;
 }
 
 .page-title {
@@ -263,7 +257,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background-color: #15803d;
+  background-color: #1e293b;
   border: none;
   border-radius: 6px;
   font-size: 12px;
@@ -275,8 +269,13 @@
 }
 
 .action-pill-btn-gold:hover {
-  background-color: #166534;
+  background-color: #424f63;
   box-shadow: 0 2px 4px rgba(22, 101, 52, 0.2);
+}
+
+.action-pill-btn-gold:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ==========================================================================
@@ -314,12 +313,7 @@
   outline: none;
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   border-radius: 2px;
-  transition: all 0.1s ease;
-}
-
-.formatting-toolbar-select.size-selector:focus {
-  border-color: #0078d4;
-  box-shadow: 0 0 0 1px #0078d4;
+  border: none;
 }
 
 .toolbar-icon-btn {
@@ -334,19 +328,11 @@
   border-radius: 4px;
   color: #475569;
   cursor: pointer;
-  transition: all 0.1s ease;
 }
 
 .toolbar-icon-btn:hover {
   background-color: #f1f5f9;
   color: #0f172a;
-}
-
-.toolbar-icon-btn.active,
-.toolbar-icon-btn[data-active="true"] {
-  background-color: #e2e8f0 !important;
-  color: #0f172a !important;
-  font-weight: bold;
 }
 
 .toolbar-trigger-btn {
@@ -360,260 +346,204 @@
   border-radius: 6px;
   font-size: 12px;
   color: #334155;
-  transition: all 0.15s ease;
   cursor: pointer;
   box-sizing: border-box;
 }
 
-.toolbar-trigger-btn:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-}
-
 /* ==========================================================================
-   THE PARCHMENT / STAGE DESK LAYOUT (NATIVE PAGINATION FIX)
+   THE PARCHMENT STAGE - PERMANENT FIX FOR CENTERING & PAGE SIZES
    ========================================================================== */
 .parchment-desk-stage {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 40px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 32px;
   background-color: #cbd5e1;
+  box-sizing: border-box;
 }
 
 .paper-sheet {
-  width: 816px;
+  width: 816px !important;
+  /* 8.5 inches */
+  min-width: 816px !important;
+  max-width: 816px !important;
+  height: 1248px !important;
+  /* 13 inches Legal Standard */
+  min-height: 1248px !important;
+  max-height: 1248px !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
   border: 1px solid #94a3b8;
-  padding: 72px;
-  box-sizing: border-box;
-  display: block;
-  font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', 'Barlow', sans-serif;
+  padding: 72px 72px 72px 72px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
   position: relative;
   background-color: #ffffff;
-}
-
-/* Editing Mode: Long Scrollable Document Frame */
-.paper-sheet.editing-mode-sheet {
-  height: auto;
-  min-height: 1056px;
-  background-image: repeating-linear-gradient(to bottom,
-      #ffffff 0px,
-      #ffffff 1054px,
-      #c8d4de 1054px,
-      #c8d4de 1056px);
-  background-size: 100% 1056px;
-}
-
-/* Preview/Render Mode: Fixed dimensions per sheet segment */
-.paper-sheet.preview-mode-sheet {
-  height: 1056px;
+  flex-shrink: 0;
+  margin: 0 auto !important;
   overflow: hidden;
-  background-image: none;
 }
 
 /* ==========================================================================
-   CORPORATE SYSTEM STATIONERY LETTERHEAD HEADER
+   CORPORATE SYSTEM LETTERHEAD STATIONERY HEADER
    ========================================================================== */
 .stlaf-header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-bottom: 16px;
-  margin-bottom: 24px;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  padding-bottom: 16px !important;
+  margin-bottom: 24px !important;
+  width: 100% !important;
+  height: 70px !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
 }
 
 .logo-section {
-  flex-shrink: 0;
+  flex-shrink: 0 !important;
 }
 
 .logo-image {
-  height: 52px;
-  object-fit: contain;
+  height: 70px !important;
+  width: auto !important;
+  object-fit: contain !important;
+  display: block !important;
 }
 
 .contact-section {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  text-align: right !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
 }
 
 .contact-item {
-  font-size: 11px;
-  color: #475569;
-  line-height: 1.4;
-  margin: 0;
+  font-size: 11px !important;
+  color: #000000 !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
 }
 
 /* ==========================================================================
-   DYNAMIC COMPONENT RENDER ENGINE INTERFACE
+   RENDER MATRIX ENGINE DICTIONARY DEFINITIONS
    ========================================================================== */
+.legal-document-editor-container {
+  flex: 1 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
 .document-drafting-editor,
-.compiled-preview-paper {
-  line-height: 1.6;
+.compiled-preview-paper,
+.compiled-preview-paper-scoping {
+  width: 100%;
   color: #0f172a;
-  font-size: 13px;
-  text-align: justify;
-  font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', 'Barlow', sans-serif;
 }
 
 .document-drafting-editor p,
-.compiled-preview-paper p {
-  margin: 0 0 12px 0;
-  text-indent: 0;
+.compiled-preview-paper p,
+.compiled-preview-paper-scoping p {
+  margin: inherit !important;
 }
 
-.first-line-indent {
-  text-indent: 48px !important;
-}
-
-.document-drafting-editor strong,
-.document-drafting-editor b,
-.compiled-preview-paper strong,
-.compiled-preview-paper b {
-  font-weight: bold;
-  color: #000000;
-}
-
-/* Bullets, Numbering, & Roman Layout Mechanics */
-.document-drafting-editor ol,
-.document-drafting-editor ul,
-.compiled-preview-paper ol,
-.compiled-preview-paper ul {
-  list-style-position: outside !important;
-  padding-left: 32px !important;
-  margin-top: 8px !important;
-  margin-bottom: 8px !important;
-}
-
-.document-drafting-editor li,
-.compiled-preview-paper li {
-  margin-bottom: 6px !important;
-  text-indent: 0 !important;
-}
-
-.document-drafting-editor ul,
-.compiled-preview-paper ul {
-  list-style-type: disc !important;
-}
-
-.document-drafting-editor ul ul,
-.compiled-preview-paper ul ul {
-  list-style-type: circle !important;
-}
-
-.document-drafting-editor ol,
-.compiled-preview-paper ol {
-  list-style-type: decimal !important;
-}
-
-ol[style*="list-style-type: lower-roman"],
-.document-drafting-editor ol.lower-roman,
-.compiled-preview-paper ol.lower-roman {
-  list-style-type: lower-roman !important;
-}
-
-ol[style*="list-style-type: upper-roman"],
-.document-drafting-editor ol.upper-roman,
-.compiled-preview-paper ol.upper-roman {
-  list-style-type: upper-roman !important;
-}
-
-ol[style*="list-style-type: lower-alpha"],
-.document-drafting-editor ol.lower-alpha,
-.compiled-preview-paper ol.lower-alpha {
-  list-style-type: lower-alpha !important;
-}
-
-/* Exact Table Configuration & Page Breaking Fixes */
-.docx-rendered-table,
-.document-drafting-editor table,
-.compiled-preview-paper table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 16px 0;
-  text-indent: 0 !important;
-  page-break-inside: auto;
-}
-
-.docx-rendered-table tr,
-.document-drafting-editor table tr,
-.compiled-preview-paper table tr {
-  page-break-inside: avoid !important;
-  page-break-after: auto;
-}
-
-.docx-rendered-table th,
-.docx-rendered-table td,
-.document-drafting-editor table th,
-.document-drafting-editor table td,
-.compiled-preview-paper table th,
-.compiled-preview-paper table td {
-  border: 1px solid #cbd5e1;
-  padding: 8px 12px;
-  font-size: 12px;
-  text-align: left;
-  vertical-align: middle;
-  background-color: #ffffff;
-}
-
-.docx-rendered-table th,
-.document-drafting-editor table th,
-.compiled-preview-paper table th {
-  background-color: #f8fafc;
-  font-weight: bold;
-  color: #334155;
-}
-
-.docx-rendered-table tr.category-row,
-.document-drafting-editor table tr.category-row {
-  background-color: #f1f5f9;
-  font-weight: bold;
-}
-
-/* Page Indicator inside Preview Sheets */
+/* Page Indicator Inside Canvas */
 .page-number-indicator {
-  position: absolute;
-  bottom: 24px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 11px;
-  color: #94a3b8;
-  border-top: 1px dashed #e2e8f0;
-  padding-top: 8px;
-  margin: 0 72px;
+  position: absolute !important;
+  bottom: 24px !important;
+  left: 0 !important;
+  right: 0 !important;
+  text-align: center !important;
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  border-top: 1px dashed #e2e8f0 !important;
+  padding-top: 8px !important;
+  margin: 0 72px !important;
 }
 
-/* ==========================================================================
-   SYSTEM COMPONENTS & TOKENS
-   ========================================================================== */
+/* Tokens and Signatures */
 .live-token {
-  background-color: #f0fdf4 !important;
-  color: #16a34a !important;
-  border: 1px dashed #bbf7d0 !important;
-  padding: 1px 4px !important;
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  padding: 2px 4px !important;
   border-radius: 4px !important;
   font-weight: 600 !important;
-  font-size: 12px !important;
-  display: inline-block !important;
-  margin: 0 2px !important;
-  user-select: none !important;
-  text-indent: 0 !important;
 }
 
 .docx-signature-block {
-  max-width: 180px;
-  max-height: 80px;
-  object-fit: contain;
-  display: block;
-  margin-top: 8px;
-  text-indent: 0 !important;
-  page-break-inside: avoid;
+  max-width: 180px !important;
+  max-height: 80px !important;
+  object-fit: contain !important;
+}
+
+.editor-inserted-image {
+  max-width: 100%;
+  height: auto;
+  margin: 8px 0;
+}
+
+/* ==========================================================================
+   LOADING & EXPORT OVERLAYS
+   ========================================================================== */
+.export-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.export-modal {
+  background: white;
+  padding: 32px 48px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.export-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #1e293b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   PDF BLIND EXPORT CONTAINER
+   ========================================================================== */
+.pdf-export-container {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 816px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #ffffff !important;
+}
+
+.pdf-export-container .paper-sheet {
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
 }
 
 /* ==========================================================================
@@ -621,7 +551,7 @@ ol[style*="list-style-type: lower-alpha"],
    ========================================================================== */
 @media print {
   @page {
-    size: letter;
+    size: legal;
     margin: 0;
   }
 
@@ -630,14 +560,12 @@ ol[style*="list-style-type: lower-alpha"],
     color: #000000 !important;
   }
 
-  .no-print {
+  .no-print,
+  .page-number-indicator {
     display: none !important;
   }
 
-  .workspace-sidebar {
-    display: none !important;
-  }
-
+  .workspace-sidebar,
   .sticky-action-controls {
     display: none !important;
   }
@@ -650,9 +578,60 @@ ol[style*="list-style-type: lower-alpha"],
   .paper-sheet {
     box-shadow: none !important;
     border: none !important;
-    padding: 0 !important;
+    padding: 72px !important;
     width: 100% !important;
-    min-height: auto !important;
-    background-image: none !important;
   }
+}
+
+/* ==========================================================================
+   PDF EXPORT SPECIFIC - ENSURES EXACT MATCH & REMOVES PAGE INDICATOR
+   ========================================================================== */
+.pdf-export-container .page-number-indicator {
+  display: none !important;
+}
+
+/* ==========================================================================
+   WORD DOCX EXACT VISUAL MATCH ENGINE (FIX)
+   ========================================================================== */
+
+/* Pinupuwersa ang standard corporate word style rules */
+.document-drafting-editor,
+.compiled-preview-paper,
+.compiled-preview-paper-scoping {
+  font-family: 'Calibri', 'Arial', sans-serif !important;
+  line-height: 1.25 !important;
+}
+
+/* Overriding global table structures to exactly mirror Word boundaries */
+.docx-rendered-table,
+.document-drafting-editor table,
+.compiled-preview-paper table,
+.compiled-preview-paper-scoping table {
+  width: 100% !important;
+  max-width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 12px 0 !important;
+  table-layout: fixed !important;
+  /* Pumipigil sa pag-expand/kusa ng cells */
+}
+
+/* Sakto sa borders, padding, at font size ng Microsoft Word questionnaires */
+.docx-rendered-table th,
+.docx-rendered-table td,
+.document-drafting-editor table th,
+.document-drafting-editor table td,
+.compiled-preview-paper table th,
+.compiled-preview-paper table td,
+.compiled-preview-paper-scoping table td {
+  border: 1px solid #4b5563 !important;
+  /* Maayos at madilim na border gaya ng Word gridlines */
+  padding: 6px 8px !important;
+  font-size: 11pt !important;
+  vertical-align: top !important;
+  word-wrap: break-word !important;
+}
+
+/* Inaayos ang mga checkbox inputs o checkboxes fields */
+.document-drafting-editor td contenteditable {
+  min-height: 20px;
 }
