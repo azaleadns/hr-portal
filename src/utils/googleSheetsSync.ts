@@ -32,14 +32,14 @@ export function getSyncConfig(): SyncConfig {
       console.error('Failed to parse sync config', e);
     }
   }
-  
+
   if (config.webAppUrl) {
     config.webAppUrl = config.webAppUrl.trim();
   }
   if (config.accessToken) {
     config.accessToken = config.accessToken.trim();
   }
-  
+
   // Auto-upgrade method if webAppUrl or accessToken is defined but method is set to local
   if (config.webAppUrl && isValidAppsScriptUrl(config.webAppUrl)) {
     config.method = 'apps_script';
@@ -48,7 +48,7 @@ export function getSyncConfig(): SyncConfig {
   } else {
     config.method = 'local';
   }
-  
+
   return config;
 }
 
@@ -60,7 +60,7 @@ export function saveSyncConfig(config: SyncConfig) {
 // Fetch Candidates (Applicants) from Google Sheets or Apps Script Web App
 export async function fetchSpreadsheetCandidates(config: SyncConfig): Promise<Applicant[] | null> {
   const { method, webAppUrl, accessToken } = config;
-  
+
   if (method === 'apps_script' && webAppUrl) {
     try {
       const response = await fetch(`${webAppUrl}?action=read`);
@@ -184,7 +184,7 @@ export async function writeSpreadsheetCandidate(config: SyncConfig, candidate: A
       let values: any[][] = [];
       let rowIndex = -1;
       let headers: string[] = ['ID', 'FULL NAME', 'EMAIL', 'PHONE NUMBER', 'POSITION', 'STAGE', 'EXPERIENCE', 'COMMENT', 'SUBMISSION DATE'];
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.values && data.values.length > 0) {
@@ -453,7 +453,7 @@ function parseJobFromSheet(row: any): Job {
   const idValue = row.ID || row.id || `job-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
   const positionValue = row.POSITION || row.position || row.title || 'Officer Position';
   const targetVal = row.TARGET || row.noRequired || '1';
-  
+
   return {
     id: String(idValue),
     title: String(positionValue),

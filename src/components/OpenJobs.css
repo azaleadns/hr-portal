@@ -657,6 +657,7 @@
   .oj-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .oj-grid-container {
     grid-template-columns: repeat(2, 1fr);
   }

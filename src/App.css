@@ -23,6 +23,7 @@
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0 !important;
-    padding-top: 60px; /* offset for mobile header toggle */
+    padding-top: 60px;
+    /* offset for mobile header toggle */
   }
 }

@@ -2,5 +2,7 @@
   "name": "HR Onboarding and Offboarding Portal",
   "description": "An interactive HR dashboard for tracking personnel onboarding and offboarding workflows, synced with Google Sheets data.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

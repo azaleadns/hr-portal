@@ -56,7 +56,7 @@ function parseCSVLine(text: string): string[] {
 // Flexible helper to parse complex month year formats like "Aug 14, 2025", "2026-03-01", etc.
 function parseSheetDate(dateStr: string): { month: number; year: number } | null {
   if (!dateStr || typeof dateStr !== 'string') return null;
-  
+
   // Try format "Month DD, YYYY" (e.g., "Aug 14, 2025")
   const matchReadable = dateStr.match(/([a-zA-Z]+)\s+(\d+)\s*,\s*(\d{4})/);
   if (matchReadable) {
@@ -68,7 +68,7 @@ function parseSheetDate(dateStr: string): { month: number; year: number } | null
       return { month, year };
     }
   }
-  
+
   // Try ISO format "YYYY-MM-DD" (e.g., "2026-03-01")
   const matchISO = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (matchISO) {
@@ -84,7 +84,7 @@ function parseSheetDate(dateStr: string): { month: number; year: number } | null
   if (!isNaN(d.getTime())) {
     return { month: d.getMonth(), year: d.getFullYear() };
   }
-  
+
   return null;
 }
 
@@ -94,7 +94,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
   const [syncing, setSyncing] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  
+
   // Year selector filter (starts with current year automatically)
   const [selectedYear, setSelectedYear] = useState<string>(() => String(new Date().getFullYear()));
 
@@ -115,7 +115,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
       if (!response.ok) {
         throw new Error('Google Sheets responded with an invalid server status');
       }
-      
+
       const text = await response.text();
       const lines = text.split('\n');
       const loadedEmployees: any[] = [];
@@ -124,7 +124,7 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
       for (let i = 7; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
-        
+
         const cols = parseCSVLine(line);
         if (cols.length < 5) continue;
 
@@ -191,12 +191,12 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
     const startYear = 2022;
     const currentYear = new Date().getFullYear();
     const nextYear = currentYear + 1; // Future year automatic adding
-    
+
     // Add all years in sequence from 2022 up to nextYear
     for (let y = startYear; y <= nextYear; y++) {
       yearsSet.add(y);
     }
-    
+
     finalEmployees.forEach(e => {
       const hireInfo = parseSheetDate(e.dateHired);
       if (hireInfo && hireInfo.year >= startYear) {
@@ -543,8 +543,8 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
             {loading ? (
               <Loader2 size={24} className="animate-spin text-slate-400" />
             ) : (
-              <Doughnut 
-                data={genderData} 
+              <Doughnut
+                data={genderData}
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
@@ -572,8 +572,8 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
             {loading ? (
               <Loader2 size={24} className="animate-spin text-slate-400" />
             ) : (
-              <Bar 
-                data={jobStatusData} 
+              <Bar
+                data={jobStatusData}
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
@@ -602,8 +602,8 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
             {loading ? (
               <Loader2 size={24} className="animate-spin text-slate-400" />
             ) : (
-              <Bar 
-                data={terminationsData} 
+              <Bar
+                data={terminationsData}
                 options={{
                   indexAxis: 'y',
                   responsive: true,
@@ -630,15 +630,15 @@ export default function Dashboard({ applicants, employees }: DashboardProps) {
         <div className="db-card-header" style={{ paddingBottom: '16px' }}>
           <h3 className="db-card-title">Hires vs. Departures (Monthly Trend)</h3>
         </div>
-        
+
         <div className="db-line-chart-wrapper">
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
               <Loader2 size={32} className="animate-spin text-[#c9a961]" />
             </div>
           ) : (
-            <Line 
-              data={monthlyTrendData} 
+            <Line
+              data={monthlyTrendData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,

@@ -4,8 +4,8 @@ import { Applicant } from '../types';
 import { stageConfig } from '../data/mockData';
 import ApplicantDetailModal from './ApplicantDetailModal';
 import AddCandidateModal from './AddCandidateModal';
-import { 
-  Plus, 
+import {
+  Plus,
   Calendar,
   Search,
   FileText,
@@ -56,9 +56,9 @@ interface ApplicantTrackerProps {
   onDeleteCandidate: (id: string) => void;
 }
 
-export default function ApplicantTracker({ 
-  applicants, 
-  onUpdateStage, 
+export default function ApplicantTracker({
+  applicants,
+  onUpdateStage,
   onAddCandidate,
   onDeleteCandidate
 }: ApplicantTrackerProps) {
@@ -78,7 +78,7 @@ export default function ApplicantTracker({
       rejected: [],
       TERMINATED: []
     };
-    
+
     COLUMN_ORDER.forEach(stage => {
       cols[stage] = applicants.filter(a => a.stage === stage);
     });
@@ -159,7 +159,7 @@ export default function ApplicantTracker({
                   </span>
                 </div>
 
-                 <DroppableComponent droppableId={stage}>
+                <DroppableComponent droppableId={stage}>
                   {(provided: any, snapshot: any) => (
                     <div
                       ref={provided.innerRef}

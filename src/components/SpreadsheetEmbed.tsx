@@ -5,7 +5,7 @@ import { getSyncConfig, saveSyncConfig, SyncConfig, fetchSpreadsheetCandidates, 
 export default function SpreadsheetEmbed() {
   const spreadsheetId = '1MCXPxNuU67Bn_MNB0ye3fh3Mlx5HwMIJdh52V9rgSBk';
   const embedUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit?rm=minimal`;
-  
+
   const [config, setConfig] = useState<SyncConfig>(getSyncConfig());
   const [showSettings, setShowSettings] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
@@ -16,17 +16,17 @@ export default function SpreadsheetEmbed() {
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawUrl = e.target.value;
     const isUrlOk = isValidAppsScriptUrl(rawUrl);
-    const updated: SyncConfig = { 
-      ...config, 
-      webAppUrl: rawUrl, 
-      method: isUrlOk ? 'apps_script' : 'local' 
+    const updated: SyncConfig = {
+      ...config,
+      webAppUrl: rawUrl,
+      method: isUrlOk ? 'apps_script' : 'local'
     };
     setConfig(updated);
     saveSyncConfig(updated);
     if (!isUrlOk && rawUrl.trim().length > 0) {
-      setTestResult({ 
-        status: 'error', 
-        message: 'This looks like a Google Sheets URL. Please make sure to paste the Apps Script Web App URL ending in /exec.' 
+      setTestResult({
+        status: 'error',
+        message: 'This looks like a Google Sheets URL. Please make sure to paste the Apps Script Web App URL ending in /exec.'
       });
     } else {
       setTestResult({ status: 'idle', message: '' });
@@ -388,17 +388,17 @@ function jsonResponse(obj) {
           <p className="page-subtitle">Inspect and edit rows in real-time. Changes written here synchronize with the HR diagnostic suite.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button 
-            className="add-candidate-btn" 
+          <button
+            className="add-candidate-btn"
             style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#1e293b' }}
             onClick={() => window.location.reload()}
           >
             <RefreshCw size={14} />
             <span>Reload Document</span>
           </button>
-          
-          <button 
-            className="add-candidate-btn" 
+
+          <button
+            className="add-candidate-btn"
             style={{ background: '#fff', border: '1px solid #cbd5e1', color: '#334155' }}
             onClick={() => setShowSettings(true)}
             title="Google Sheets Database Synchronization Settings"
@@ -431,14 +431,14 @@ function jsonResponse(obj) {
           allow="autoplay"
         ></iframe>
       </div>
-      
+
       {/* Diagnostic status line */}
       <footer style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#64748b', background: '#f8fafc', padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{ width: '8px', height: '8px', background: config.method !== 'local' ? '#22c55e' : '#f59e0b', borderRadius: '50%', display: 'inline-block' }}></span>
           <span>
             Sync Status:{' '}
-            <button 
+            <button
               onClick={() => setShowSettings(true)}
               style={{ background: 'none', border: 'none', textDecoration: 'underline', color: config.method !== 'local' ? '#22c55e' : '#f59e0b', fontWeight: 600, cursor: 'pointer', padding: 0 }}
             >
@@ -460,7 +460,7 @@ function jsonResponse(obj) {
                 <Database style={{ color: '#10b981' }} size={20} />
                 <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a', fontWeight: 700 }}>Google Sheets Synchronization Setup</h3>
               </div>
-              <button 
+              <button
                 onClick={() => setShowSettings(false)}
                 style={{ background: 'transparent', border: 'none', padding: '4px', cursor: 'pointer', color: '#94a3b8' }}
               >
@@ -476,9 +476,9 @@ function jsonResponse(obj) {
               <label style={{ fontSize: '12.5px', fontWeight: 600, color: '#334155' }}>
                 Google Apps Script Web App URL
               </label>
-              <input 
-                type="url" 
-                placeholder="https://script.google.com/macros/s/.../exec" 
+              <input
+                type="url"
+                placeholder="https://script.google.com/macros/s/.../exec"
                 value={config.webAppUrl}
                 onChange={handleUrlChange}
                 style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', transition: 'border-color 0.15s ease' }}
@@ -492,7 +492,7 @@ function jsonResponse(obj) {
             {config.webAppUrl && (
               <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                  <button 
+                  <button
                     onClick={testConnection}
                     disabled={isTesting}
                     style={{ background: '#fff', border: '1px solid #cbd5e1', color: '#334155', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -512,7 +512,7 @@ function jsonResponse(obj) {
 
             {/* Copy code expander */}
             <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '12px' }}>
-              <button 
+              <button
                 onClick={() => setShowGuide(!showGuide)}
                 style={{ background: 'none', border: 'none', color: '#16a34a', fontSize: '12.5px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', padding: 0 }}
               >
@@ -530,7 +530,7 @@ function jsonResponse(obj) {
                     <li>Set Select type to <strong>Web app</strong>, configure Execute as to <strong>Me</strong>, and Who has access to <strong>Anyone</strong>.</li>
                     <li>Click <strong>Deploy</strong>, grant permission, copy the resulting <strong>Web app URL</strong>, and paste it above!</li>
                   </ol>
-                  <button 
+                  <button
                     onClick={copyToClipboard}
                     style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fff', color: '#1D8A48', border: '1px solid #1D8A48', borderRadius: '6px', padding: '6px 12px', fontSize: '11.5px', fontWeight: 600, cursor: 'pointer' }}
                   >
@@ -542,13 +542,13 @@ function jsonResponse(obj) {
             </div>
 
             <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button 
+              <button
                 onClick={() => setShowSettings(false)}
                 style={{ background: '#fff', border: '1px solid #cbd5e1', color: '#475569', borderRadius: '8px', padding: '8px 16px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={triggerSaveAndRefresh}
                 style={{ background: '#1D8A48', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
               >
