@@ -55,24 +55,17 @@ function extractGoogleDocInfo(input: string): { docId: string | null; tabId: str
 
   try {
     const url = new URL(trimmed);
-    const searchParams = url.searchParams;
-    if (searchParams.has('tab')) {
-      tabId = searchParams.get('tab');
-    }
-  } catch (e) {
+    tabId = url.searchParams.get('tab');
+  } catch {
     const tabMatch = trimmed.match(/[?&]tab=([a-zA-Z0-9-_.]+)/);
-    if (tabMatch && tabMatch[1]) {
-      tabId = tabMatch[1];
-    }
+    if (tabMatch) tabId = tabMatch[1];
   }
 
   if (/^[a-zA-Z0-9-_]{25,}$/.test(trimmed)) {
     docId = trimmed;
   } else {
     const match = trimmed.match(/\/document\/d\/([a-zA-Z0-9-_]{25,})/);
-    if (match && match[1]) {
-      docId = match[1];
-    }
+    if (match) docId = match[1];
   }
 
   return { docId, tabId };
@@ -121,10 +114,10 @@ export default function Templates() {
     if (activeTemplate) {
       setEditDocName(activeTemplate.name);
       setEditDocCategory(activeTemplate.category);
-      const url = activeTemplate.tabId
+      setEditDocUrl(activeTemplate.tabId
         ? `https://docs.google.com/document/d/${activeTemplate.docId}/edit?tab=${activeTemplate.tabId}`
-        : `https://docs.google.com/document/d/${activeTemplate.docId}/edit`;
-      setEditDocUrl(url);
+        : `https://docs.google.com/document/d/${activeTemplate.docId}/edit`
+      );
       setEditError('');
     }
   }, [activeTemplate]);
@@ -169,40 +162,21 @@ export default function Templates() {
 
   const handleExportPDF = async () => {
     if (!activeTemplate) return;
-
-    // I-construct ang Google Docs export link
-    const exportUrl = `https://docs.google.com/document/d/${activeTemplate.docId}/export?format=pdf${activeTemplate.tabId ? `&tab=${activeTemplate.tabId}` : ''
-      }`;
-
+    const exportUrl = `https://docs.google.com/document/d/${activeTemplate.docId}/export?format=pdf${activeTemplate.tabId ? `&tab=${activeTemplate.tabId}` : ''}`;
     try {
-      // I-fetch ang PDF data mula sa Google Docs
       const response = await fetch(exportUrl);
       if (!response.ok) throw new Error('Network response was not ok');
-
       const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(new File([blob], `${activeTemplate.name}.pdf`, { type: 'application/pdf' }));
 
-      // Dito natin pinupwersa ang custom file name gamit ang File object
-      const customFileName = `${activeTemplate.name}.pdf`;
-      const file = new File([blob], customFileName, { type: 'application/pdf' });
-
-      // Gumawa ng temporary URL para sa bagong file object
-      const blobUrl = window.URL.createObjectURL(file);
-
-      // Gumawa ng temporary anchor element para ma-trigger ang download
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = customFileName;
-
-      // I-execute ang download
+      link.download = `${activeTemplate.name}.pdf`;
       document.body.appendChild(link);
       link.click();
-
-      // Linisin ang DOM at memory pagkatapos
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error('Failed to export PDF:', error);
-      // Fallback: Kung magka-issue sa network, bubuksan na lang ito sa bagong tab
+    } catch {
       window.open(exportUrl, '_blank', 'noopener,noreferrer');
     }
   };
@@ -212,7 +186,6 @@ export default function Templates() {
     setEditError('');
 
     if (!activeTemplate) return;
-
     if (!editDocName.trim()) {
       setEditError('Document Name is required.');
       return;
@@ -231,7 +204,6 @@ export default function Templates() {
           : t
       )
     );
-
     setShowEditPanel(false);
   };
 
@@ -246,13 +218,23 @@ export default function Templates() {
     }
   };
 
-  // Compute workspace iFrame source URL depending on whether the toolbar option is open
+  // CLEANED & IMMUNE FROM ERR_FILE_NOT_FOUND
   const iframeSrc = useMemo(() => {
     if (!activeTemplate) return '';
+
     const endpoint = showToolbar ? 'edit' : 'preview';
-    return activeTemplate.tabId
-      ? `https://docs.google.com/document/d/${activeTemplate.docId}/${endpoint}?tab=${activeTemplate.tabId}`
-      : `https://docs.google.com/document/d/${activeTemplate.docId}/${endpoint}`;
+    let baseSrc = `https://docs.google.com/document/d/${activeTemplate.docId}/${endpoint}`;
+    const params: string[] = [];
+
+    if (activeTemplate.tabId) {
+      params.push(`tab=${activeTemplate.tabId}`);
+    }
+
+    if (showToolbar) {
+      params.push('disableOffline=true');
+    }
+
+    return params.length > 0 ? `${baseSrc}?${params.join('&')}` : baseSrc;
   }, [activeTemplate, showToolbar]);
 
   return (
@@ -314,7 +296,7 @@ export default function Templates() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN WORKSPACE */}
       <section className="gdocs-main-workspace">
         <header className="workspace-header">
           <div className="header-left">
@@ -336,22 +318,15 @@ export default function Templates() {
           <div className="header-actions">
             {activeTemplate && (
               <>
-                {/* TOOLBAR SHOW AND HIDE BUTTON */}
                 <button
                   className={`header-action-btn border-btn ${showToolbar ? 'active-toolbar-btn' : ''}`}
                   onClick={() => setShowToolbar(!showToolbar)}
-                  title={showToolbar ? "Hide Google Docs toolbar" : "Show Google Docs toolbar"}
                 >
                   {showToolbar ? <EyeOff size={14} /> : <Eye size={14} />}
                   <span>{showToolbar ? "Hide Toolbar" : "Show Toolbar"}</span>
                 </button>
 
-                {/* EXPORT PDF BUTTON */}
-                <button
-                  onClick={handleExportPDF}
-                  className="header-action-btn border-btn cursor-pointer pdf-export-navy-btn"
-                  title="Export this document to PDF format"
-                >
+                <button onClick={handleExportPDF} className="header-action-btn border-btn cursor-pointer pdf-export-navy-btn">
                   <Download size={14} />
                   <span>Export PDF</span>
                 </button>
@@ -363,7 +338,7 @@ export default function Templates() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="header-action-btn border-btn cursor-pointer"
-                  title="Open in official Google Docs website"
+                  style={{ backgroundColor: '#3086F6', color: '#fff', borderColor: '#3086F6' }}
                 >
                   <ExternalLink size={14} />
                   <span>Open GDocs</span>
@@ -376,14 +351,12 @@ export default function Templates() {
             <button
               className={`header-action-btn info-btn ${showGuide ? 'active' : ''}`}
               onClick={() => setShowGuide(!showGuide)}
-              title="Show integration tutorial"
             >
               <HelpCircle size={15} />
             </button>
           </div>
         </header>
 
-        {/* WORK AREA */}
         <div className="workspace-body">
           <div className="workspace-layout">
             <div className="iframe-pane">
@@ -402,10 +375,6 @@ export default function Templates() {
                   <FileText size={48} className="empty-icon text-slate-300" />
                   <h3>No Google Doc Linked</h3>
                   <p>Please select a template from the sidebar or link a custom Google Doc to get started.</p>
-                  <button className="add-doc-btn mt-4 inline-flex" onClick={() => setShowAddModal(true)}>
-                    <Plus size={16} />
-                    <span>Link Google Doc</span>
-                  </button>
                 </div>
               )}
             </div>
@@ -422,31 +391,14 @@ export default function Templates() {
                     </button>
                   </div>
                   <div className="guide-content">
-                    <p className="guide-lead">Make your Google Docs interactive inside the HR Portal in 3 easy steps:</p>
                     <ol className="guide-steps">
-                      <li>
-                        <strong>Create or Select a Doc:</strong> Write your template inside Google Docs.
-                      </li>
-                      <li>
-                        <strong>Configure Sharing Access:</strong>
-                        <ul>
-                          <li>In Google Docs, click the blue <strong>Share</strong> button at the top-right.</li>
-                          <li>Under <em>General access</em>, change <strong>"Restricted"</strong> to <strong>"Anyone with the link"</strong>.</li>
-                          <li>Set the role to <strong>"Editor"</strong> to edit docs inside the portal, or <strong>"Viewer"</strong> for read-only templates.</li>
-                        </ul>
-                      </li>
-                      <li>
-                        <strong>Paste the Link in Portal:</strong>
-                        <ul>
-                          <li>Copy the sharing URL from your browser or Google Docs share dialog.</li>
-                          <li>Click <strong>Setting icon</strong> in the top header.</li>
-                          <li>Paste the URL/ID and save. Your template is now fully integrated!</li>
-                        </ul>
-                      </li>
+                      <li><strong>Create/Select Doc:</strong> Write your template inside Google Docs.</li>
+                      <li><strong>Configure Sharing Access:</strong> Click <strong>Share</strong> → change to <strong>"Anyone with the link"</strong> → Set to <strong>"Editor"</strong> or <strong>"Viewer"</strong>.</li>
+                      <li><strong>Paste Link:</strong> Click the settings icon in header, paste the full URL/ID, and save.</li>
                     </ol>
                     <div className="guide-note">
                       <Check size={14} className="text-green-500 mr-1.5 flex-shrink-0" />
-                      <span>Changes made inside the embedded Google Doc auto-save instantly to your Google Drive!</span>
+                      <span>Changes auto-save instantly to Google Drive!</span>
                     </div>
                   </div>
                 </div>
@@ -456,12 +408,12 @@ export default function Templates() {
         </div>
       </section>
 
-      {/* EDIT TEMPLATE MODAL */}
+      {/* EDIT MODAL */}
       {showEditPanel && activeTemplate && (
         <div className="modal-overlay" onClick={() => setShowEditPanel(false)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Configure Google Doc Integration</h3>
+              <h3>Configure Google Doc</h3>
               <button className="modal-close-btn" onClick={() => setShowEditPanel(false)}>
                 <X size={18} />
               </button>
@@ -469,22 +421,11 @@ export default function Templates() {
             <form onSubmit={handleUpdateTemplate} className="modal-form">
               <div className="form-group">
                 <label className="form-label">Template Title</label>
-                <input
-                  type="text"
-                  value={editDocName}
-                  onChange={e => setEditDocName(e.target.value)}
-                  className="form-input"
-                  placeholder="Exit Clearance Form..."
-                />
+                <input type="text" value={editDocName} onChange={e => setEditDocName(e.target.value)} className="form-input" />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Category</label>
-                <select
-                  value={editDocCategory}
-                  onChange={e => setEditDocCategory(e.target.value)}
-                  className="form-select"
-                >
+                <select value={editDocCategory} onChange={e => setEditDocCategory(e.target.value)} className="form-select">
                   <option value="General">General</option>
                   <option value="Employment">Employment</option>
                   <option value="Onboarding">Onboarding</option>
@@ -496,48 +437,23 @@ export default function Templates() {
                   <option value="Finance">Finance</option>
                 </select>
               </div>
-
               <div className="form-group">
                 <label className="form-label">Google Doc URL or Document ID</label>
-                <input
-                  type="text"
-                  value={editDocUrl}
-                  onChange={e => setEditDocUrl(e.target.value)}
-                  className="form-input"
-                  placeholder="https://docs.google.com/document/d/..."
-                />
-                <span className="form-help-text">
-                  Paste the full sharing URL (including tab query parameters) or the alphanumeric ID.
-                </span>
+                <input type="text" value={editDocUrl} onChange={e => setEditDocUrl(e.target.value)} className="form-input" />
               </div>
 
               {editError && <div className="form-error-msg">{editError}</div>}
 
               <div className="modal-footer">
-                {selectedTemplateId.startsWith('custom-') ? (
-                  <button
-                    type="button"
-                    className="delete-template-btn"
-                    onClick={() => handleDeleteTemplate(selectedTemplateId)}
-                  >
+                {selectedTemplateId.startsWith('custom-') && (
+                  <button type="button" className="delete-template-btn" onClick={() => handleDeleteTemplate(selectedTemplateId)}>
                     <Trash2 size={14} />
                     <span>Delete Template</span>
                   </button>
-                ) : (
-                  <div />
                 )}
-
                 <div className="footer-actions-right">
-                  <button
-                    type="button"
-                    className="cancel-btn"
-                    onClick={() => setShowEditPanel(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="save-btn-gold">
-                    Save Changes
-                  </button>
+                  <button type="button" className="cancel-btn" onClick={() => setShowEditPanel(false)}>Cancel</button>
+                  <button type="submit" className="save-btn-gold">Save Changes</button>
                 </div>
               </div>
             </form>
@@ -545,7 +461,7 @@ export default function Templates() {
         </div>
       )}
 
-      {/* LINK NEW DOCUMENT MODAL */}
+      {/* ADD MODAL */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
@@ -558,22 +474,11 @@ export default function Templates() {
             <form onSubmit={handleAddTemplate} className="modal-form">
               <div className="form-group">
                 <label className="form-label">Template Name</label>
-                <input
-                  type="text"
-                  value={newDocName}
-                  onChange={e => setNewDocName(e.target.value)}
-                  className="form-input"
-                  placeholder="e.g. Employee Handbook, Welcome Letter"
-                />
+                <input type="text" value={newDocName} onChange={e => setNewDocName(e.target.value)} className="form-input" />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Category</label>
-                <select
-                  value={newDocCategory}
-                  onChange={e => setNewDocCategory(e.target.value)}
-                  className="form-select"
-                >
+                <select value={newDocCategory} onChange={e => setNewDocCategory(e.target.value)} className="form-select">
                   <option value="General">General</option>
                   <option value="Employment">Employment</option>
                   <option value="Onboarding">Onboarding</option>
@@ -585,34 +490,16 @@ export default function Templates() {
                   <option value="Finance">Finance</option>
                 </select>
               </div>
-
               <div className="form-group">
                 <label className="form-label">Google Doc URL or Document ID</label>
-                <input
-                  type="text"
-                  value={newDocUrl}
-                  onChange={e => setNewDocUrl(e.target.value)}
-                  className="form-input"
-                  placeholder="https://docs.google.com/document/d/..."
-                />
-                <span className="form-help-text">
-                  Supports pasting full URLs with `?tab=t.xxxx` parameters to link specific document tabs.
-                </span>
+                <input type="text" value={newDocUrl} onChange={e => setNewDocUrl(e.target.value)} className="form-input" />
               </div>
 
               {addError && <div className="form-error-msg">{addError}</div>}
 
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="cancel-btn"
-                  onClick={() => setShowAddModal(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="save-btn-gold">
-                  Link Template
-                </button>
+                <button type="button" className="cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+                <button type="submit" className="save-btn-gold">Link Template</button>
               </div>
             </form>
           </div>
