@@ -245,13 +245,13 @@ export default function App() {
 
   const addJob = (newJob: Job) => {
     setJobs(prev => [newJob, ...prev]);
-    
+
     // Writeback to Google Sheets
     const syncConfig = getSyncConfig();
     if (syncConfig.method !== 'local') {
       writeSpreadsheetJob(syncConfig, newJob);
     }
-    
+
     // Add activity logging
     const newActivity: Activity = {
       id: `act-${Date.now()}`,
@@ -265,13 +265,13 @@ export default function App() {
 
   const closeJob = (jobId: string, jobTitle: string) => {
     setJobs(prev => prev.filter(j => j.id !== jobId));
-    
+
     // Writeback to Google Sheets
     const syncConfig = getSyncConfig();
     if (syncConfig.method !== 'local') {
       deleteSpreadsheetJob(syncConfig, jobId);
     }
-    
+
     // Add activity logging
     const newActivity: Activity = {
       id: `act-${Date.now()}`,
@@ -291,13 +291,13 @@ export default function App() {
 
   const addCandidate = (candidate: Applicant) => {
     setApplicants(prev => [candidate, ...prev]);
-    
+
     // Writeback to Google Sheets
     const syncConfig = getSyncConfig();
     if (syncConfig.method !== 'local') {
       writeSpreadsheetCandidate(syncConfig, candidate);
     }
-    
+
     // Add activity logging
     const newActivity: Activity = {
       id: `act-${Date.now()}`,
@@ -312,13 +312,13 @@ export default function App() {
   const deleteCandidate = (candidateId: string) => {
     const candidate = applicants.find(app => app.id === candidateId);
     setApplicants(prev => prev.filter(app => app.id !== candidateId));
-    
+
     // Writeback to Google Sheets
     const syncConfig = getSyncConfig();
     if (syncConfig.method !== 'local') {
       deleteSpreadsheetCandidate(syncConfig, candidateId);
     }
-    
+
     // Add activity logging
     if (candidate) {
       const newActivity: Activity = {
@@ -347,7 +347,7 @@ export default function App() {
               onNavClick={() => setSidebarCollapsed(true)}
               onLogout={handleLogout}
             />
-            
+
             <main className="main-content">
               <Routes>
                 <Route

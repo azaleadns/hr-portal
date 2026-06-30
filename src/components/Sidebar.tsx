@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ChevronDown, ChevronRight, Users, UserPlus, Briefcase, FileSpreadsheet, FileSignature, Menu, LogIn } from 'lucide-react';
+import { LayoutDashboard, ChevronDown, ChevronRight, Users, UserPlus, Briefcase, FileSpreadsheet, FileText, Menu, LogIn } from 'lucide-react';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -29,7 +29,7 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
 
   return (
     <>
-      <aside 
+      <aside
         className={`sidebar ${collapsed ? 'collapsed' : ''} ${isHovered ? 'hovered' : ''}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -72,7 +72,7 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
             </NavLink>
 
             {/* Recruitment Expandable Header */}
-            <div 
+            <div
               className={`nav-item ${showRecruitment ? 'dropdown-active' : ''}`}
               onClick={() => setShowRecruitment(!showRecruitment)}
               style={{ cursor: 'pointer' }}
@@ -136,8 +136,8 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               style={{ marginTop: '4px' }}
             >
-              <span className="nav-icon"><FileSignature size={20} /></span>
-              {isExpanded && <span className="nav-label">Templates</span>}
+              <span className="nav-icon"><FileText size={20} /></span>
+              {isExpanded && <span className="nav-label">Google Docs</span>}
             </NavLink>
           </nav>
 
@@ -154,14 +154,14 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
             </button>
 
             {onLogout && (
-              <button 
+              <button
                 id="sidebar-logout-btn"
-                className="bottom-btn logout-btn" 
+                className="bottom-btn logout-btn"
                 onClick={onLogout}
-                style={{ 
+                style={{
                   marginTop: '4px',
-                  background: 'rgba(239, 68, 68, 0.08)', 
-                  border: '1px solid rgba(239, 68, 68, 0.25)', 
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
                   color: '#fdbaf8',
                   backdropFilter: 'blur(4px)'
                 }}
