@@ -1,3 +1,10 @@
+/**
+ * file name: OpenJobs.tsx
+ * author: Iya
+ * date: July 1, 2026
+ * purpose: Acts as the primary job board dashboard for tracking active job posts. It monitors recruitment metrics, filters vacancies by title or location, showcases department information, and displays target fill quotas.
+ */
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Job, Applicant } from '../types';
 import PostPositionModal from './PostPositionModal';

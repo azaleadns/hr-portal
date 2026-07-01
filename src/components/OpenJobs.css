@@ -1,3 +1,10 @@
+/**
+ * file name: OpenJobs.css
+ * author: Iya
+ * date: July 1, 2026
+ * purpose: Provides the design system and styling for the Job Openings board, encompassing KPI metrics cards, job card grids, status badge highlights (open, closed, draft), and responsive layout configurations.
+ */
+
 :root {
   --bg-main: #f8fafc;
   --navy-dark: #1a2849;

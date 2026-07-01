@@ -1,6 +1,10 @@
-/* Glassmorphic Login Page Styling */
+/*
+   File Name: Login.css
+   Author: Iya
+   Date: July 1, 2026
+   Purpose: Naglalaman ng custom background radial gradients at layout declarations para sa modern, premium glassmorphic user authentication page overlay.
+*/
 
-/* Main Full-Screen Backdrop */
 .login-container {
   min-height: 100vh;
   width: 100vw;
@@ -9,13 +13,11 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  /* Deep Navy Blue Gradient Background */
   background: linear-gradient(315deg, #e4c778 0%, #123765 70%, #9E9E9E 100%);
   padding: 1.5rem;
   z-index: 1;
 }
 
-/* Floating Abstract Orbs for Depth and Standout Glass Effect */
 .bg-glow-orb-1 {
   position: absolute;
   top: 15%;
@@ -23,7 +25,6 @@
   width: 450px;
   height: 450px;
   border-radius: 50%;
-  /* Soft Gold Glow */
   background: radial-gradient(circle, rgba(201, 169, 97, 0.15) 0%, rgba(201, 169, 97, 0) 70%);
   filter: blur(40px);
   pointer-events: none;
@@ -38,7 +39,6 @@
   width: 550px;
   height: 550px;
   border-radius: 50%;
-  /* Soft Navy Blue/Teal Glow */
   background: radial-gradient(circle, rgba(36, 51, 88, 0.5) 0%, rgba(17, 28, 54, 0) 70%);
   filter: blur(50px);
   pointer-events: none;
@@ -54,14 +54,12 @@
   width: 350px;
   height: 350px;
   border-radius: 50%;
-  /* Central soft Navy glow */
   background: radial-gradient(circle, rgba(201, 169, 97, 0.08) 0%, rgba(17, 28, 54, 0) 80%);
   filter: blur(60px);
   pointer-events: none;
   z-index: 2;
 }
 
-/* Subtle Geometric Accent Line behind the Glass Card */
 .bg-line-accent {
   position: absolute;
   width: 140%;

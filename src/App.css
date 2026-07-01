@@ -1,3 +1,12 @@
+/*
+==========================================
+File Name: App.css
+Author: Iya
+Date: July 1, 2026
+Purpose: Provides the standard layout system for the application, specifically managing the global sidebar toggle states, content responsive scaling, and mobile view optimizations[cite: 10].
+==========================================
+*/
+
 /* Standard layouts */
 .app-layout {
   display: flex;

@@ -1,3 +1,10 @@
+/*
+   File Name: ApplicantDetailModal.css
+   Author: Iya
+   Date: July 1, 2026
+   Purpose: Pang-estilo sa modal popup na nagpapakita ng detalyadong impormasyon tungkol sa napiling kandidato, kasama ang info grid layout at permanent deletion actions.
+*/
+
 .detail-modal {
   max-width: 600px;
   overflow: hidden;

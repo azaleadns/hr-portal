@@ -1,3 +1,10 @@
+/*
+   File Name: Login.tsx
+   Author: Iya
+   Date: July 1, 2026
+   Purpose: React login form component na gumagamit ng Framer Motion para sa UI animations at nagpapatupad ng temporary authenticating workflow para sa administrative access.
+*/
+
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { User, Lock, Eye, EyeOff, ShieldAlert, LogIn } from 'lucide-react';

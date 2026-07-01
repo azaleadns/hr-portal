@@ -1,3 +1,13 @@
+/**
+ * ==========================================
+ * File Name: App.tsx
+ * Author: Iya
+ * Date: July 1, 2026
+ * Purpose: Acts as the central application shell that orchestrates routing, authentication, local storage caching, activity tracking, automated Google Sheets synchronization, and global recruitment workflow management[cite: 11].
+ * ==========================================
+ */
+
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';

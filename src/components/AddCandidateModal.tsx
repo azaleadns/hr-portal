@@ -1,3 +1,10 @@
+/*
+   File Name: AddCandidateModal.tsx
+   Author: Iya
+   Date: July 1, 2026
+   Purpose: Controlled form modal component para sa pagpapatala (registration) at frontend validation ng mga bagong aplikante sa loob ng tracking cycle.
+*/
+
 import React, { useState } from 'react';
 import { Applicant } from '../types';
 import './AddCandidateModal.css';

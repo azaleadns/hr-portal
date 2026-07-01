@@ -1,3 +1,10 @@
+/**
+ * file name: Sidebar.css
+ * author: Iya
+ * date: July 1, 2026
+ * purpose: Manages layout configurations and transition states for the system's global sidebar component. Handles specific structural properties for hover behaviors, sub-navigation dropdown mechanics, custom brand typography, and mobile responsive breakpoint styles.
+ */
+
 .sidebar {
   position: fixed;
   left: 0;

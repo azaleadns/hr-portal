@@ -1,3 +1,10 @@
+/*
+   File Name: Dashboard.tsx
+   Author: Iya
+   Date: July 1, 2026
+   Purpose: React component na namamahala sa pag-sync ng live Google Sheets employee database upang mag-render ng mga interactive analytic data chart (Chart.js) para sa HR team.
+*/
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Doughnut, Bar, Line } from 'react-chartjs-2';
 import {

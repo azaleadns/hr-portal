@@ -1,3 +1,10 @@
+/*
+   File Name: ApplicantDetailModal.tsx
+   Author: Iya
+   Date: July 1, 2026
+   Purpose: Pop-up modal view na nagpapakita ng personal credentials, education, at nagbibigay-daan sa thủ-manong (manual) paglilipat ng stage o permanenteng pagbura sa profile ng aplikante.
+*/
+
 import React from 'react';
 import { Applicant } from '../types';
 import { stageConfig } from '../data/mockData';
@@ -143,7 +150,7 @@ export default function ApplicantDetailModal({ applicant, onClose, onUpdateStage
 
           {/* Delete Candidate Action */}
           <div className="detail-modal-delete-action">
-            <button 
+            <button
               className="delete-profile-btn"
               onClick={() => onDelete(applicant.id)}
             >

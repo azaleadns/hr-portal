@@ -1,3 +1,10 @@
+/*
+   File Name: ApplicantTracker.tsx
+   Author: Iya
+   Date: July 1, 2026
+   Purpose: React interface board page component na nagpapatupad ng drag-and-drop mechanics (`@hello-pangea/dnd`) para sa pagsasaayos ng recruitment stages.
+*/
+
 import React, { useState, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Applicant } from '../types';

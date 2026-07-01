@@ -1,3 +1,10 @@
+/**
+ * file name: SpreadsheetEmbed.tsx
+ * author: Iya
+ * date: July 1, 2026
+ * purpose: Embeds the central Google Spreadsheet via an iframe for live viewing and structural edits of candidates and job data. Includes settings for sync configuration and integration with the Google Apps Script Web App.
+ */
+
 import React, { useState } from 'react';
 import { ExternalLink, RefreshCw, Settings, X, Copy, Check, Database, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { getSyncConfig, saveSyncConfig, SyncConfig, fetchSpreadsheetCandidates, isValidAppsScriptUrl } from '../utils/googleSheetsSync';

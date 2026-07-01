@@ -1,3 +1,10 @@
+/**
+ * file name: PostPositionModal.tsx
+ * author: Iya
+ * date: July 1, 2026
+ * purpose: Provides a structured multi-field form modal for submitting new job positions. It includes real-time field validation (required fields, character counters, and logical date checks) before passing the formatted data payload upstream.
+ */
+
 import React, { useState } from 'react';
 import { Job } from '../types';
 import { Briefcase, Building, Layers, Calendar, Plus, X } from 'lucide-react';

@@ -1,4 +1,10 @@
-/* Hide scrollbar on the parent main-content specifically for the tracker page */
+/*
+   File Name: ApplicantTracker.css
+   Author: Iya
+   Date: July 1, 2026
+   Purpose: Nag-aayos sa flex workflow, scrollbar properties, at structural layouts ng Kanban columns at dynamic user cards sa recruitment tracker pipeline view.
+*/
+
 .main-content:has(.tracker-page) {
   overflow: hidden !important;
   scrollbar-width: none;

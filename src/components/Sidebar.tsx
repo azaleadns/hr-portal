@@ -1,3 +1,10 @@
+/**
+ * file name: Sidebar.tsx
+ * author: Iya
+ * date: July 1, 2026
+ * purpose: Displays the primary navigation links for the HR Portal. It handles the collapse/expand state of the menu, features the STLAF logo, and provides routing access to the dashboard, tracker, spreadsheet, and templates.
+ */
+
 import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ChevronDown, ChevronRight, Users, UserPlus, Briefcase, FileSpreadsheet, FileText, Menu, LogIn } from 'lucide-react';

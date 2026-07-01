@@ -1,3 +1,10 @@
+/**
+ * file name: Templates.tsx
+ * author: Iya
+ * date: July 1, 2026
+ * purpose: Manages the document generation templates connected to Google Docs. It allows HR users to link new templates, categorize existing documents, preview files via an interactive iframe, and view integration instructions.
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText, ExternalLink, Settings, X, Plus, Search,

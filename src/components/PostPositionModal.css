@@ -1,3 +1,10 @@
+/**
+ * file name: PostPositionModal.css
+ * author: Iya
+ * date: July 1, 2026
+ * purpose: Defines styles for the pop-up modal utilized for adding or editing job positions. It configures the modal overlay, smooth slide-up animation transitions, form controls, and input typography.
+ */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;500;700&family=Playfair+Display:wght=600;700&display=swap');
 
 /* Main Overlay */
