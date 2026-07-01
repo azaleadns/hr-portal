@@ -12,12 +12,12 @@ export default function AddCandidateModal({ onClose, onAdd }: AddCandidateModalP
     name: '',
     email: '',
     phone: '',
-    position: 'Senior Associate Attorney',
+    position: '', // Ginawang empty string bilang default
     stage: 'screening' as Applicant['stage'],
     experience: '',
     comments: ''
   });
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,6 +27,7 @@ export default function AddCandidateModal({ onClose, onAdd }: AddCandidateModalP
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email format';
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!formData.position.trim()) newErrors.position = 'Position is required'; // Nagdagdag ng validation para sa position
     if (!formData.experience.trim()) newErrors.experience = 'Experience description is required';
 
     setErrors(newErrors);
@@ -48,12 +49,12 @@ export default function AddCandidateModal({ onClose, onAdd }: AddCandidateModalP
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
-    
+
     // Simulating response
     setTimeout(() => {
       const colors = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#14b8a6'];
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
-      
+
       const initials = formData.name
         .split(' ')
         .map(n => n[0])
@@ -76,7 +77,7 @@ export default function AddCandidateModal({ onClose, onAdd }: AddCandidateModalP
         notes: formData.comments,
         education: 'N/A'
       };
-      
+
       onAdd(candidate);
       setIsSubmitting(false);
       onClose();
@@ -158,19 +159,18 @@ export default function AddCandidateModal({ onClose, onAdd }: AddCandidateModalP
 
           {/* Applied for Position & Starting pipeline */}
           <div className="ac-row-2col">
-            <div className="ac-field">
+            <div className={`ac-field ${errors.position ? 'ac-field--error' : ''}`}>
               <label className="ac-label">
                 Apply for Position <span className="ac-required">*</span>
               </label>
-              <select
+              <input
+                type="text"
                 className="ac-input"
+                placeholder="e.g. Full Stack Engineer"
                 value={formData.position}
                 onChange={e => handleChange('position', e.target.value)}
-              >
-                <option value="Senior Associate Attorney">Senior Associate Attorney</option>
-                <option value="Full Stack Engineer">Full Stack Engineer</option>
-                <option value="Corporate Accountant">Corporate Accountant</option>
-              </select>
+              />
+              {errors.position && <span className="ac-error-msg">{errors.position}</span>}
             </div>
 
             <div className="ac-field">

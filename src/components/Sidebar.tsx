@@ -38,12 +38,26 @@ export default function Sidebar({ collapsed, onToggle, onAddCandidateClick, onPo
           {/* Logo */}
           <div className="sidebar-logo">
             <Link to="/" className="logo-wrapper" onClick={handleNavClick}>
-              <div className="logo-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#c9a961" opacity="0.3"></path>
-                  <path d="M2 17l10 5 10-5" stroke="#c9a961" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
-                  <path d="M2 12l10 5 10-5" stroke="#c9a961" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
-                </svg>
+              <div
+                className="logo-icon"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '42px',          // Maaari mong i-adjust ang width at height
+                  height: '42px',         // depende sa aktwal na sukat ng iyong sidebar
+                  overflow: 'hidden'
+                }}
+              >
+                <img
+                  src="slogo.png"
+                  alt="STLAF Logo"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain' // Pinapanatili nitong tama ang aspect ratio ng imahe
+                  }}
+                />
               </div>
 
               {isExpanded && (
